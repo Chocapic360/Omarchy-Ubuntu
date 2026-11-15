@@ -5,6 +5,12 @@
 # following GNOME login starts clean.
 export PATH="$HOME/.local/bin:$PATH"
 
+# Snap and Flatpak apps: make sure their .desktop folders are on XDG_DATA_DIRS (and
+# /snap/bin on PATH) so the launcher lists them. Both scripts skip what's already there.
+for f in /etc/profile.d/apps-bin-path.sh /etc/profile.d/flatpak.sh; do
+  [ -r "$f" ] && . "$f"
+done
+
 if command -v start-hyprland >/dev/null; then
   start-hyprland
 else

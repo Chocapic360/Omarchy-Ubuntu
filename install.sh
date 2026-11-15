@@ -25,7 +25,7 @@ fi
 
 # Packages that must exist for the setup to work
 REQUIRED=(
-  hyprland hyprland-guiutils hyprlock hypridle
+  hyprland hyprlock hypridle
   waybar fuzzel mako-notifier swaybg
   grim slurp wl-clipboard cliphist
   brightnessctl playerctl pamixer pavucontrol wireplumber
@@ -48,6 +48,10 @@ OPTIONAL=(
 
 # Only one graphical polkit agent is needed; take the first one available
 POLKIT_AGENTS=(polkit-gnome policykit-1-gnome mate-polkit lxpolkit)
+
+# Hyprland's helper dialogs (hyprland-dialog, update/ANR popups). Ubuntu 26.04 still
+# ships them under the older name hyprland-qtutils; take whichever exists
+GUIUTILS=(hyprland-guiutils hyprland-qtutils)
 
 available() { [[ -n $(apt-cache policy "$1" 2>/dev/null | awk '/Candidate:/ && $2 != "(none)" {print $2}') ]]; }
 
@@ -83,6 +87,16 @@ install_packages() {
       break
     fi
   done
+
+  local found=false
+  for pkg in "${GUIUTILS[@]}"; do
+    if available "$pkg"; then
+      to_install+=("$pkg")
+      found=true
+      break
+    fi
+  done
+  $found || warn "Not in apt: ${GUIUTILS[*]} (Hyprland's popup dialogs won't show)"
 
   # Remember which packages this run adds, so their login-autostart entries
   # can be kept out of GNOME and uninstall.sh can list them
@@ -122,6 +136,19 @@ keep_autostart_out_of_gnome() {
     printf '[Desktop Entry]\nType=Application\nName=%s (hidden by omarchy-ubuntu)\nHidden=true\n' "$name" >"$override"
     echo "$override" >>"$STATE_DIR/autostart-overrides"
     warn "Kept $name from starting in GNOME"
+  done
+}
+
+# waybar, mako and hypridle ship systemd user services that their packages enable for
+# graphical-session.target. GNOME reaches that target, so they'd start inside GNOME.
+# Hyprland starts them itself from autostart.conf, so mask the services for this user.
+USER_UNITS=(waybar.service mako.service hypridle.service)
+keep_user_units_out_of_gnome() {
+  local unit
+  for unit in "${USER_UNITS[@]}"; do
+    if [[ $(readlink "$HOME/.config/systemd/user/$unit" 2>/dev/null) != /dev/null ]]; then
+      systemctl --user mask "$unit" >/dev/null 2>&1 && warn "Kept $unit from starting in GNOME"
+    fi
   done
 }
 
@@ -200,6 +227,7 @@ verify_config() {
 if ! $LINKS_ONLY; then
   install_packages
   keep_autostart_out_of_gnome
+  keep_user_units_out_of_gnome
   install_font
   install_session
 fi

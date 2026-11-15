@@ -45,6 +45,13 @@ if [[ -f $STATE_DIR/autostart-overrides ]]; then
   done <"$STATE_DIR/autostart-overrides"
 fi
 
+bold "==> Unmasking the user services install.sh masked"
+for unit in waybar.service mako.service hypridle.service; do
+  if [[ $(readlink "$HOME/.config/systemd/user/$unit" 2>/dev/null) == /dev/null ]]; then
+    systemctl --user unmask "$unit" >/dev/null 2>&1 && note "unmasked $unit"
+  fi
+done
+
 bold "==> Removing the login-screen session (needs sudo)"
 sudo rm -f /usr/share/wayland-sessions/omarchy-ubuntu.desktop /usr/local/bin/omu-session
 
