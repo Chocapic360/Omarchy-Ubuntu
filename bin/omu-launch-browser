@@ -1,0 +1,18 @@
+#!/bin/bash
+# omu-launch-browser: open the default browser. Pass --private for a private window.
+desktop=$(xdg-settings get default-web-browser 2>/dev/null)
+exec_line=$(grep -m1 '^Exec=' "/usr/share/applications/$desktop" "$HOME/.local/share/applications/$desktop" \
+  /var/lib/snapd/desktop/applications/*"${desktop}" 2>/dev/null | head -1 | sed -E 's/^[^:]*:Exec=//; s/ %[uUfF]//g')
+
+if [[ $1 == "--private" ]]; then
+  case "$exec_line" in
+  *firefox*) exec $exec_line --private-window ;;
+  *) exec $exec_line --incognito ;;
+  esac
+fi
+
+if [[ -n $exec_line ]]; then
+  exec $exec_line "$@"
+else
+  exec xdg-open "https://"
+fi

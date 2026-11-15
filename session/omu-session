@@ -1,0 +1,9 @@
+#!/bin/bash
+# omu-session: login entry for the "Hyprland (Omarchy Ubuntu)" session in GDM.
+# Puts ~/.local/bin on PATH so Hyprland can find the omu-* scripts, then starts Hyprland.
+export PATH="$HOME/.local/bin:$PATH"
+
+if command -v start-hyprland >/dev/null; then
+  exec start-hyprland
+fi
+exec Hyprland

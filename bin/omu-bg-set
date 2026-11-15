@@ -1,0 +1,13 @@
+#!/bin/bash
+# omu-bg-set: set the wallpaper (also used by the lock screen).
+# Usage: omu-bg-set <image> [fit|fill]
+# 'fit' (default) letterboxes using the theme's background colour, so 16:9 art isn't cropped on 16:10.
+image="$(readlink -f "$1")"
+mode="${2:-fit}"
+state="$HOME/.config/omarchy-ubuntu/current"
+
+[[ -f $image ]] || { echo "No such image: $1" >&2; exit 1; }
+mkdir -p "$state"
+ln -sfn "$image" "$state/background"
+echo "$mode" >"$state/background-mode"
+omu-bg-restore

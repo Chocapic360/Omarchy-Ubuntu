@@ -1,0 +1,20 @@
+#!/bin/bash
+# omu-dmenu: themed pick-one-line menu (fuzzel in dmenu mode). Reads options on stdin.
+# Usage: ... | omu-dmenu [-p prompt] [-w width_in_chars] [-l max_lines]
+prompt="" width=26 lines=15
+while getopts "p:w:l:" opt; do
+  case $opt in
+  p) prompt="$OPTARG" ;;
+  w) width="$OPTARG" ;;
+  l) lines="$OPTARG" ;;
+  *) exit 2 ;;
+  esac
+done
+
+input="$(cat)"
+count=$(printf '%s\n' "$input" | grep -c .)
+((count < lines)) && lines=$count
+((lines < 1)) && lines=1
+
+printf '%s\n' "$input" | fuzzel --dmenu --prompt "$prompt " \
+  --width "$width" --lines "$lines" 2>/dev/null

@@ -1,0 +1,11 @@
+#!/bin/bash
+# omu-polkit-agent: start whichever graphical polkit agent is installed (password prompts for admin actions).
+for agent in \
+  /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
+  /usr/libexec/polkit-gnome-authentication-agent-1 \
+  /usr/lib/x86_64-linux-gnu/libexec/polkit-mate-authentication-agent-1 \
+  /usr/libexec/polkit-mate-authentication-agent-1 \
+  /usr/bin/lxpolkit; do
+  [[ -x $agent ]] && exec "$agent"
+done
+notify-send -u normal "No polkit agent found" "Admin password prompts won't appear. Run install.sh again."

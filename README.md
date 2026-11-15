@@ -1,0 +1,101 @@
+# omarchy-ubuntu
+
+Omarchy's look and feel on **Ubuntu 26.04**, installed next to GNOME rather than replacing it. You get a Hyprland session with Omarchy 3.8's tiling, keybindings, top bar, control menu and keybindings viewer, themed in a purple take on Catppuccin Mocha.
+
+Built for a Dell 16 laptop (1920×1200 @ 60 Hz), but works on any Ubuntu 26.04 machine.
+
+## Install
+
+```bash
+git clone https://github.com/Chocapic360/omarchy-ubuntu ~/omarchy-ubuntu
+cd ~/omarchy-ubuntu
+./install.sh
+```
+
+Then log out. On the login screen, click your name and use the gear icon to pick **Hyprland (Omarchy Ubuntu)**. To get back to GNOME, pick **Ubuntu** there.
+
+The installer:
+
+- installs the packages from Ubuntu's `universe` repo (Hyprland 0.53, Waybar, fuzzel, mako, hyprlock, hypridle, …)
+- installs the JetBrainsMono Nerd Font into `~/.local/share/fonts`
+- adds the login-screen session (`/usr/share/wayland-sessions/omarchy-ubuntu.desktop`)
+- symlinks `config/*` into `~/.config` and `bin/*` into `~/.local/bin`, backing up anything already there as `*.bak-<date>`
+
+Run it again any time. `./install.sh --links-only` just refreshes the symlinks.
+
+## Shortcuts
+
+Press **Super + K** to search every shortcut. The essentials:
+
+| Keys | Action |
+|---|---|
+| Super + Space | App launcher |
+| Super + Alt + Space | Omarchy menu (Apps, Learn, Capture, Toggle, Style, Setup, Update, System) |
+| Super + Escape | System menu (lock, suspend, logout, restart, shutdown) |
+| Super + K | Keybindings viewer |
+| Super + Return | Terminal (Alacritty) |
+| Super + Shift + B | Browser |
+| Super + Shift + F | Files |
+| Super + Shift + N | Editor (Zed if installed) |
+| Super + W | Close window |
+| Super + 1…0 | Switch workspace |
+| Super + Shift + 1…0 | Move window to workspace |
+| Super + Arrows | Move focus |
+| Super + T / F | Toggle floating / full screen |
+| Super + C / V | Universal copy / paste |
+| Super + Ctrl + V | Clipboard history |
+| Print | Screenshot a region (copied and saved to ~/Pictures/Screenshots) |
+| Super + Ctrl + L | Lock |
+
+## Layout
+
+```
+config/            -> symlinked into ~/.config
+  hypr/              hyprland.conf sources the files below
+    envs, monitors, input, looknfeel, windows, autostart .conf
+    bindings/          apps, tiling, utilities, media, clipboard
+    hyprlock.conf, hypridle.conf
+    local.conf         your untracked overrides (created by install.sh)
+  waybar/  fuzzel/  mako/  alacritty/  swayosd/
+bin/               -> symlinked into ~/.local/bin (all scripts are omu-*)
+themes/purple-catppuccin/
+  hyprland.conf, waybar.css, fuzzel.ini, mako.ini, alacritty.toml, hyprlock.conf, swayosd.css
+  backgrounds/       wallpapers offered in Style > Background
+session/           login-screen entry + launcher
+```
+
+Each app config includes its colours from `~/.config/omarchy-ubuntu/current/theme`, which points at `themes/purple-catppuccin`. That's the same idea as Omarchy's themes, so adding a second theme later is just another folder.
+
+## Theme
+
+Catppuccin Mocha text and status colours, Mauve `#cba6f7` as the main accent, and backgrounds taken from the wallpaper:
+
+| Role | Hex |
+|---|---|
+| Background (wallpaper black) | `#0a0612` |
+| Panels | `#120b1f` |
+| Selection / inactive border | `#1e1530` |
+| Wallpaper purple (secondary accent) | `#864cc0` |
+| Mauve (main accent) | `#cba6f7` |
+| Text | `#cdd6f4` |
+
+The wallpaper is 16:9 and the laptop screen is 16:10, so it's shown in `fit` mode. The thin bands above and below use the wallpaper's own black and blend in. `omu-bg-set <image> fill` switches a wallpaper to fill mode.
+
+## How this differs from Omarchy
+
+- **Hyprland 0.53 from Ubuntu**, not Arch's latest. Omarchy 4 moved to a Lua config and Quickshell. That needs Hyprland 0.56, so this repo follows Omarchy 3.8.
+- **fuzzel replaces Walker** for the launcher and menus. Walker isn't packaged for Ubuntu. fuzzel is styled to match: a centred box with square corners and a 2 px border.
+- **Ubuntu tools** in place of Omarchy's TUIs: `pavucontrol`, `nmtui`, `blueman`, `apt`.
+- Left out for now: Omarchy's theme switcher, web apps, screen recording, dictation, the screensaver and the install/remove menus.
+
+## Troubleshooting
+
+- After editing a Hyprland file, run `hyprctl configerrors` (Hyprland reloads by itself).
+- Waybar doesn't reload by itself: use *Update > Restart Waybar* in the menu, or `omu-restart-waybar`.
+- If the screen name isn't `eDP-1`, check `hyprctl monitors` and fix `config/hypr/monitors.conf`.
+- Personal tweaks go in `~/.config/hypr/local.conf` (not tracked by git).
+- If the launcher won't open, run `fuzzel` in a terminal. An older fuzzel may reject a newer option in `config/fuzzel/fuzzel.ini`. Delete the line it names.
+
+## Credits
+
+Configs, keybindings, the bar layout, the menu and the keybindings viewer are adapted from [Omarchy](https://github.com/basecamp/omarchy) 3.8 by David Heinemeier Hansson (MIT). Colours from [Catppuccin](https://catppuccin.com). See [LICENSE](LICENSE).

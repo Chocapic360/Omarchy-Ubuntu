@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Hyprland (Omarchy Ubuntu)
+Comment=Hyprland with the Omarchy-style setup from omarchy-ubuntu
+Exec=/usr/local/bin/omu-session
+Type=Application
+DesktopNames=Hyprland

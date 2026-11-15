@@ -1,0 +1,4 @@
+#!/bin/bash
+# omu-restart-waybar: Waybar doesn't reload its config by itself.
+pkill -x waybar
+setsid waybar >/dev/null 2>&1 &

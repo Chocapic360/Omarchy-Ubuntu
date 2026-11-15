@@ -1,0 +1,7 @@
+#!/bin/bash
+# omu-clipboard: pick from clipboard history (Super + Ctrl + V), then paste it with Super + V.
+if pgrep -x fuzzel >/dev/null; then
+  pkill -x fuzzel
+  exit 0
+fi
+cliphist list | omu-dmenu -p "Clipboard…" -w 70 -l 15 | cliphist decode | wl-copy

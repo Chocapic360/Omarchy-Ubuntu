@@ -1,0 +1,17 @@
+#!/bin/bash
+# omu-volume: up|down|mute|mic-mute [step]. Shows the SwayOSD popup when it's running.
+step="${2:-5}"
+osd() { pgrep -x swayosd-server >/dev/null && command -v swayosd-client >/dev/null; }
+
+case "$1" in
+up)
+  if osd; then swayosd-client --output-volume "+$step"; else wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ "${step}%+"; fi ;;
+down)
+  if osd; then swayosd-client --output-volume "-$step"; else wpctl set-volume @DEFAULT_AUDIO_SINK@ "${step}%-"; fi ;;
+mute)
+  if osd; then swayosd-client --output-volume mute-toggle; else wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle; fi ;;
+mic-mute)
+  if osd; then swayosd-client --input-volume mute-toggle; else wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle; fi ;;
+*)
+  echo "Usage: omu-volume up|down|mute|mic-mute [step]" >&2; exit 2 ;;
+esac

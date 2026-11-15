@@ -1,0 +1,10 @@
+/* Purple Catppuccin palette for Waybar */
+@define-color background #0a0612;  /* wallpaper black */
+@define-color surface    #1e1530;
+@define-color foreground #cdd6f4;  /* Catppuccin text */
+@define-color muted      #6c7086;  /* overlay0 */
+@define-color accent     #cba6f7;  /* mauve */
+@define-color accent2    #864cc0;  /* wallpaper purple */
+@define-color warning    #f9e2af;
+@define-color critical   #f38ba8;
+@define-color good       #a6e3a1;

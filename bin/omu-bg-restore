@@ -1,0 +1,8 @@
+#!/bin/bash
+# omu-bg-restore: (re)start swaybg with the current wallpaper. Runs at login.
+state="$HOME/.config/omarchy-ubuntu/current"
+mode=$(cat "$state/background-mode" 2>/dev/null || echo fit)
+fill=$(cat "$state/theme/background-color" 2>/dev/null || echo "#0a0612")
+
+pkill -x swaybg
+setsid swaybg -i "$state/background" -m "$mode" -c "$fill" >/dev/null 2>&1 &

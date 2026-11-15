@@ -1,0 +1,10 @@
+#!/bin/bash
+# omu-battery-status: one-line battery summary for notifications.
+bat=$(upower -e | grep -m1 BAT)
+[[ -z $bat ]] && { echo "No battery found"; exit 0; }
+info=$(upower -i "$bat")
+pct=$(awk '/percentage/ {print int($2); exit}' <<<"$info")
+state=$(awk '/state:/ {print $2; exit}' <<<"$info")
+rate=$(awk '/energy-rate/ {printf "%.1f", $2; exit}' <<<"$info")
+left=$(awk -F': *' '/time to (empty|full)/ {print $2; exit}' <<<"$info")
+echo "󰁹  ${pct}% · ${state}${rate:+ · ${rate} W}${left:+ · ${left} left}"

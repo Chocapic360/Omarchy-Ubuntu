@@ -1,0 +1,6 @@
+#!/bin/bash
+# omu-suspend-on-battery: used by hypridle; suspends only when not plugged in.
+for ac in /sys/class/power_supply/A{C,DP}*/online; do
+  [[ -f $ac && $(<"$ac") == 1 ]] && exit 0
+done
+systemctl suspend

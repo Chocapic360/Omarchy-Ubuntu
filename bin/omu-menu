@@ -1,0 +1,176 @@
+#!/bin/bash
+# omu-menu: Omarchy-style control menu (Super + Alt + Space).
+# Adapted from Omarchy 3.8's omarchy-menu (MIT, David Heinemeier Hansson).
+# Usage: omu-menu [apps|learn|capture|toggle|style|background|setup|power|update|system]
+
+REPO="$(dirname "$(readlink -f "$(command -v omu-menu)")")/.."
+REPO="$(readlink -f "$REPO")"
+
+# Set when jumping straight to a submenu, so Esc exits instead of going back
+BACK_TO_EXIT=false
+
+back_to() {
+  if [[ $BACK_TO_EXIT == "true" ]]; then
+    exit 0
+  elif [[ -n $1 ]]; then
+    "$1"
+  else
+    show_main_menu
+  fi
+}
+
+menu() {
+  echo -e "$2" | omu-dmenu -p "$1…" -w "${3:-26}"
+}
+
+present_terminal() {
+  alacritty --class omu.floating -e bash -c "$1; echo; read -n 1 -s -r -p 'Done. Press any key to close.'"
+}
+
+open_in_editor() {
+  notify-send -u low "Editing config file" "$1"
+  omu-launch-editor "$1"
+}
+
+show_learn_menu() {
+  case $(menu "Learn" "  Keybindings\n  Omarchy\n  Hyprland\n  Ubuntu\n󰹎  This setup") in
+  *Keybindings*) omu-menu-keybindings ;;
+  *Omarchy*) xdg-open "https://learn.omacom.io/2/the-omarchy-manual" ;;
+  *Hyprland*) xdg-open "https://wiki.hypr.land/" ;;
+  *Ubuntu*) xdg-open "https://help.ubuntu.com/" ;;
+  *setup*) xdg-open "https://github.com/Chocapic360/omarchy-ubuntu" ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_capture_menu() {
+  case $(menu "Capture" "  Screenshot\n  Screenshot (full screen)\n󰃉  Color") in
+  *full*) omu-screenshot output ;;
+  *Screenshot*) omu-screenshot region ;;
+  *Color*) omu-color-picker ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_toggle_menu() {
+  case $(menu "Toggle" "󰍜  Top Bar\n󱫖  Idle Lock\n󰔎  Nightlight\n󰂛  Notifications\n  Window Gaps") in
+  *Bar*) omu-toggle-waybar ;;
+  *Idle*) omu-toggle-idle ;;
+  *Nightlight*) omu-toggle-nightlight ;;
+  *Notifications*) omu-toggle-notification-silencing ;;
+  *Gaps*) omu-toggle-gaps ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_style_menu() {
+  case $(menu "Style" "  Background\n󰸌  Theme colors\n  Hyprland look") in
+  *Background*) show_background_menu ;;
+  *Theme*) open_in_editor "$HOME/.config/omarchy-ubuntu/current/theme" ;;
+  *Hyprland*) open_in_editor ~/.config/hypr/looknfeel.conf ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_background_menu() {
+  local dir="$HOME/.config/omarchy-ubuntu/current/theme/backgrounds"
+  local choice
+  choice=$(find "$dir" -maxdepth 1 -type f \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' \) -printf '%f\n' 2>/dev/null | sort | omu-dmenu -p "Background…" -w 40)
+  if [[ -n $choice ]]; then
+    omu-bg-set "$dir/$choice"
+  else
+    back_to show_style_menu
+  fi
+}
+
+show_setup_menu() {
+  case $(menu "Setup" "  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n󰍹  Monitors\n  Keybindings\n  Input\n  Config") in
+  *Audio*) pavucontrol ;;
+  *Wifi*) omu-launch-tui nmtui ;;
+  *Bluetooth*) blueman-manager ;;
+  *Power*) show_setup_power_menu ;;
+  *Monitors*) open_in_editor ~/.config/hypr/monitors.conf ;;
+  *Keybindings*) open_in_editor ~/.config/hypr/bindings/apps.conf ;;
+  *Input*) open_in_editor ~/.config/hypr/input.conf ;;
+  *Config*) show_setup_config_menu ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_setup_power_menu() {
+  local current
+  current=$(powerprofilesctl get 2>/dev/null)
+  case $(menu "Power Profile ($current)" "󰾆  power-saver\n󰾅  balanced\n󰓅  performance" 30) in
+  *power-saver*) powerprofilesctl set power-saver ;;
+  *balanced*) powerprofilesctl set balanced ;;
+  *performance*) powerprofilesctl set performance ;;
+  *) back_to show_setup_menu ;;
+  esac
+}
+
+show_setup_config_menu() {
+  case $(menu "Setup" "  Hyprland\n  Hypridle\n  Hyprlock\n  Swayosd\n󰌧  Fuzzel\n󰍜  Waybar\n󰎟  Mako\n  Alacritty") in
+  *Hyprland*) open_in_editor ~/.config/hypr/hyprland.conf ;;
+  *Hypridle*) open_in_editor ~/.config/hypr/hypridle.conf ;;
+  *Hyprlock*) open_in_editor ~/.config/hypr/hyprlock.conf ;;
+  *Swayosd*) open_in_editor ~/.config/swayosd/config.toml ;;
+  *Fuzzel*) open_in_editor ~/.config/fuzzel/fuzzel.ini ;;
+  *Waybar*) open_in_editor ~/.config/waybar/config.jsonc ;;
+  *Mako*) open_in_editor ~/.config/mako/config ;;
+  *Alacritty*) open_in_editor ~/.config/alacritty/alacritty.toml ;;
+  *) back_to show_setup_menu ;;
+  esac
+}
+
+show_update_menu() {
+  case $(menu "Update" "  System packages\n  This setup (git pull)\n󰍜  Restart Waybar\n  Reload Hyprland") in
+  *System*) present_terminal "sudo apt update && sudo apt full-upgrade" ;;
+  *setup*) present_terminal "git -C '$REPO' pull --ff-only && '$REPO/install.sh' --links-only" ;;
+  *Waybar*) omu-restart-waybar ;;
+  *Hyprland*) hyprctl reload && notify-send -u low "Hyprland reloaded" "$(hyprctl configerrors | head -5)" ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_system_menu() {
+  case $(menu "System" "  Lock\n󰒲  Suspend\n󰍃  Logout\n󰜉  Restart\n󰐥  Shutdown") in
+  *Lock*) omu-lock ;;
+  *Suspend*) systemctl suspend ;;
+  *Logout*) hyprctl dispatch exit ;;
+  *Restart*) systemctl reboot ;;
+  *Shutdown*) systemctl poweroff ;;
+  *) back_to show_main_menu ;;
+  esac
+}
+
+show_main_menu() {
+  go_to_menu "$(menu "Go" "󰀻  Apps\n󰧑  Learn\n  Capture\n󰔎  Toggle\n  Style\n  Setup\n  Update\n  System")"
+}
+
+go_to_menu() {
+  case "${1,,}" in
+  *apps*) omu-launcher ;;
+  *learn*) show_learn_menu ;;
+  *capture*) show_capture_menu ;;
+  *toggle*) show_toggle_menu ;;
+  *background*) show_background_menu ;;
+  *style*) show_style_menu ;;
+  *power*) show_setup_power_menu ;;
+  *setup*) show_setup_menu ;;
+  *update*) show_update_menu ;;
+  *system*) show_system_menu ;;
+  esac
+}
+
+# Pressing the shortcut again while a menu is open closes it
+if pgrep -x fuzzel >/dev/null; then
+  pkill -x fuzzel
+  exit 0
+fi
+
+if [[ -n $1 ]]; then
+  BACK_TO_EXIT=true
+  go_to_menu "$1"
+else
+  show_main_menu
+fi

@@ -1,0 +1,3 @@
+#!/bin/bash
+# omu-launch-tui: run a terminal program (btop, nmtui, ...) in a floating terminal.
+exec alacritty --class omu.floating -e "$@"

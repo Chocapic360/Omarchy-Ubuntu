@@ -1,0 +1,23 @@
+#!/bin/bash
+# omu-toggle-nightlight: warm screen temperature via hyprsunset (Super + Ctrl + N).
+ON_TEMP=4000
+OFF_TEMP=6000
+
+if ! command -v hyprsunset >/dev/null; then
+  notify-send -u normal "Nightlight unavailable" "Install hyprsunset (sudo apt install hyprsunset) to use this."
+  exit 1
+fi
+
+if ! pgrep -x hyprsunset >/dev/null; then
+  setsid hyprsunset >/dev/null 2>&1 &
+  sleep 1
+fi
+
+current=$(hyprctl hyprsunset temperature 2>/dev/null | grep -oE '[0-9]+')
+if [[ $current == "$ON_TEMP" ]]; then
+  hyprctl hyprsunset temperature $OFF_TEMP >/dev/null
+  notify-send -u low "   Daylight screen temperature"
+else
+  hyprctl hyprsunset temperature $ON_TEMP >/dev/null
+  notify-send -u low "   Nightlight screen temperature"
+fi

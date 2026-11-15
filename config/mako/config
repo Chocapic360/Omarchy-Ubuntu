@@ -1,0 +1,23 @@
+# Omarchy 3.8 notification layout, purple theme colours
+include=~/.config/omarchy-ubuntu/current/theme/mako.ini
+
+anchor=top-right
+group-by=app-name,summary,body
+default-timeout=5000
+width=420
+outer-margin=20
+padding=10,15
+border-size=2
+max-icon-size=32
+font=JetBrainsMono Nerd Font 11
+
+[mode=do-not-disturb]
+invisible=true
+
+[mode=do-not-disturb app-name=notify-send]
+invisible=false
+
+[urgency=critical]
+default-timeout=0
+layer=overlay
+border-color=#f38ba8

@@ -1,0 +1,3 @@
+#!/bin/bash
+# omu-lock: lock the screen now (Super + Ctrl + L).
+pidof hyprlock >/dev/null || exec hyprlock

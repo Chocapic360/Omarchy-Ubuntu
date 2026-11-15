@@ -1,0 +1,8 @@
+#!/bin/bash
+# omu-color-picker: pick a colour on screen and copy its hex (Super + Print).
+if ! command -v hyprpicker >/dev/null; then
+  notify-send -u normal "Color picker unavailable" "Install hyprpicker (sudo apt install hyprpicker)."
+  exit 1
+fi
+pkill -x hyprpicker && exit 0
+color=$(hyprpicker -a) && [[ -n $color ]] && notify-send -u low "Copied $color"

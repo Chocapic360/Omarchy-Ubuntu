@@ -1,0 +1,18 @@
+#!/bin/bash
+# omu-waybar-indicator: small red icons in the bar's centre when idle-lock is off or DND is on.
+case "$1" in
+idle)
+  if pgrep -x hypridle >/dev/null; then
+    echo '{"text": ""}'
+  else
+    echo '{"text": "󱫖", "tooltip": "Idle locking disabled", "class": "active"}'
+  fi
+  ;;
+dnd)
+  if makoctl mode 2>/dev/null | grep -q 'do-not-disturb'; then
+    echo '{"text": "󰂛", "tooltip": "Notifications silenced", "class": "active"}'
+  else
+    echo '{"text": ""}'
+  fi
+  ;;
+esac

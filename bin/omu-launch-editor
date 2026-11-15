@@ -1,0 +1,8 @@
+#!/bin/bash
+# omu-launch-editor: open files/folders in Zed if installed, otherwise $EDITOR in a terminal.
+for zed in zeditor zed; do
+  if command -v "$zed" >/dev/null; then
+    exec "$zed" "$@"
+  fi
+done
+exec alacritty --class omu.floating -e "${EDITOR:-nano}" "$@"
