@@ -11,6 +11,7 @@ set -euo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 THEME="purple-catppuccin"
+STATE_DIR="$HOME/.config/omarchy-ubuntu"
 LINKS_ONLY=false
 [[ ${1:-} == "--links-only" ]] && LINKS_ONLY=true
 
@@ -83,8 +84,45 @@ install_packages() {
     fi
   done
 
+  # Remember which packages this run adds, so their login-autostart entries
+  # can be kept out of GNOME and uninstall.sh can list them
+  NEW_PACKAGES=()
+  for pkg in "${to_install[@]}"; do
+    dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed" || NEW_PACKAGES+=("$pkg")
+  done
+
   bold "==> Installing ${#to_install[@]} packages"
   sudo apt-get install -y "${to_install[@]}"
+
+  mkdir -p "$STATE_DIR"
+  printf '%s\n' "${NEW_PACKAGES[@]}" >>"$STATE_DIR/installed-packages"
+  sort -u -o "$STATE_DIR/installed-packages" "$STATE_DIR/installed-packages"
+}
+
+# Some new packages (blueman, polkit agents, ...) drop a file in /etc/xdg/autostart,
+# which GNOME would start at login. Hyprland ignores those files (it uses autostart.conf),
+# so hide each one with a per-user override. GNOME then behaves exactly as before.
+keep_autostart_out_of_gnome() {
+  [[ -f $STATE_DIR/installed-packages ]] || return 0
+  local pkg file name override
+  while read -r pkg; do
+    [[ -z $pkg ]] && continue
+    dpkg -L "$pkg" 2>/dev/null | grep -E '^/etc/xdg/autostart/.+\.desktop$' || true
+  done <"$STATE_DIR/installed-packages" | sort -u | while read -r file; do
+    [[ -f $file ]] || continue
+    # Already excluded from GNOME by the package itself?
+    if grep -qE '^NotShowIn=.*GNOME' "$file" ||
+      { grep -q '^OnlyShowIn=' "$file" && ! grep -qE '^OnlyShowIn=.*GNOME' "$file"; }; then
+      continue
+    fi
+    name=$(basename "$file")
+    override="$HOME/.config/autostart/$name"
+    [[ -e $override ]] && continue
+    mkdir -p "$HOME/.config/autostart"
+    printf '[Desktop Entry]\nType=Application\nName=%s (hidden by omarchy-ubuntu)\nHidden=true\n' "$name" >"$override"
+    echo "$override" >>"$STATE_DIR/autostart-overrides"
+    warn "Kept $name from starting in GNOME"
+  done
 }
 
 install_font() {
@@ -161,6 +199,7 @@ verify_config() {
 
 if ! $LINKS_ONLY; then
   install_packages
+  keep_autostart_out_of_gnome
   install_font
   install_session
 fi
@@ -178,5 +217,6 @@ Next:
   3. Log in. Super + K lists every shortcut; Super + Space opens the menu.
 
 GNOME is untouched: pick "Ubuntu" on the login screen to go back.
+To remove this setup later: ./uninstall.sh
 EOF
 fi

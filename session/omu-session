@@ -1,9 +1,21 @@
 #!/bin/bash
 # omu-session: login entry for the "Hyprland (Omarchy Ubuntu)" session in GDM.
-# Puts ~/.local/bin on PATH so Hyprland can find the omu-* scripts, then starts Hyprland.
+# Puts ~/.local/bin on PATH so Hyprland can find the omu-* scripts, starts Hyprland,
+# and when Hyprland exits, removes the variables it shared with systemd so a
+# following GNOME login starts clean.
 export PATH="$HOME/.local/bin:$PATH"
 
 if command -v start-hyprland >/dev/null; then
-  exec start-hyprland
+  start-hyprland
+else
+  Hyprland
 fi
-exec Hyprland
+status=$?
+
+SHARED_VARS=(WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP
+  HYPRLAND_INSTANCE_SIGNATURE GTK_THEME ADW_DEBUG_COLOR_SCHEME QT_QPA_PLATFORM
+  ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND)
+systemctl --user unset-environment "${SHARED_VARS[@]}" 2>/dev/null
+dbus-update-activation-environment --systemd GTK_THEME= ADW_DEBUG_COLOR_SCHEME= 2>/dev/null
+
+exit $status

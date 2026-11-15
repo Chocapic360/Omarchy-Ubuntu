@@ -23,6 +23,19 @@ The installer:
 
 Run it again any time. `./install.sh --links-only` just refreshes the symlinks.
 
+## Living next to GNOME
+
+This adds a second session; it doesn't change your GNOME one.
+
+- **Login screen:** GDM gets a new **Hyprland (Omarchy Ubuntu)** entry next to **Ubuntu**. GDM remembers the last session you picked, so to go back, click your name, then the gear icon, and choose **Ubuntu**.
+- **Apps and settings:** only Hyprland-session tools are configured (Hyprland, Waybar, fuzzel, mako, SwayOSD, Alacritty). GNOME doesn't read any of those. If `~/.config/alacritty` already existed, it's backed up first and restored by `uninstall.sh`.
+- **Theme:** the purple GTK theme is set as an environment variable inside Hyprland only. It's removed from your user session when Hyprland exits, so GNOME keeps its own look.
+- **Autostart:** some packages (blueman, polkit agents) install login autostart entries. GNOME would run them, so `install.sh` hides any that a package adds and that would run in GNOME, using a per-user override in `~/.config/autostart`. Hyprland starts its own copies from `autostart.conf`.
+- **Not touched:** GNOME settings (`gsettings`/dconf), GNOME extensions and GDM's configuration.
+- **Shared on purpose:** *Setup > Defaults* sets your default browser, text editor and file manager system-wide, so GNOME uses those choices too.
+
+`./uninstall.sh` removes every link, restores the backups, deletes the autostart overrides and the login entry. `./uninstall.sh --packages` also prints the `apt remove` line for the packages the installer added.
+
 ## Shortcuts
 
 Press **Super + K** to search every shortcut. The essentials:
