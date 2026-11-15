@@ -22,6 +22,6 @@ SHARED_VARS=(WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DE
   HYPRLAND_INSTANCE_SIGNATURE GTK_THEME ADW_DEBUG_COLOR_SCHEME QT_QPA_PLATFORM
   ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND)
 systemctl --user unset-environment "${SHARED_VARS[@]}" 2>/dev/null
-dbus-update-activation-environment --systemd GTK_THEME= ADW_DEBUG_COLOR_SCHEME= 2>/dev/null
+dbus-update-activation-environment --systemd ADW_DEBUG_COLOR_SCHEME= 2>/dev/null
 
 exit $status
