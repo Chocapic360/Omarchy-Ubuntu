@@ -1,5 +1,5 @@
 #!/bin/bash
-# omu-menu: Omarchy-style control menu (Super + Alt + Space).
+# omu-menu: Omarchy-style control menu (Super + Space).
 # Adapted from Omarchy 3.8's omarchy-menu (MIT, David Heinemeier Hansson).
 # Usage: omu-menu [apps|learn|capture|toggle|style|background|setup|power|update|system]
 

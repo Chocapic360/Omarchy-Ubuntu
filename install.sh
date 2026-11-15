@@ -168,7 +168,7 @@ Next:
   1. Log out.
   2. On the login screen, click your name, then the gear icon (bottom right),
      and pick "Hyprland (Omarchy Ubuntu)".
-  3. Log in. Super + K lists every shortcut; Super + Alt + Space opens the menu.
+  3. Log in. Super + K lists every shortcut; Super + Space opens the menu.
 
 GNOME is untouched: pick "Ubuntu" on the login screen to go back.
 EOF

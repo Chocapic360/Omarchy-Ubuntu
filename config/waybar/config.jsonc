@@ -52,7 +52,7 @@
     "format": "",
     "on-click": "omu-menu",
     "on-click-right": "alacritty",
-    "tooltip-format": "Omarchy Menu\n\nSuper + Alt + Space"
+    "tooltip-format": "Omarchy Menu\n\nSuper + Space"
   },
   "cpu": {
     "interval": 5,

@@ -29,8 +29,8 @@ Press **Super + K** to search every shortcut. The essentials:
 
 | Keys | Action |
 |---|---|
-| Super + Space | App launcher |
-| Super + Alt + Space | Omarchy menu (Apps, Learn, Capture, Toggle, Style, Setup, Update, System) |
+| Super + Space | Omarchy menu (Apps, Learn, Capture, Toggle, Style, Setup, Update, System) |
+| Super + Alt + Space | App launcher |
 | Super + Escape | System menu (lock, suspend, logout, restart, shutdown) |
 | Super + K | Keybindings viewer |
 | Super + Return | Terminal (Alacritty) |

@@ -1,5 +1,5 @@
 #!/bin/bash
-# omu-launcher: app launcher (Super + Space). Pressing it again closes it.
+# omu-launcher: app launcher (Super + Alt + Space). Pressing it again closes it.
 if pgrep -x fuzzel >/dev/null; then
   pkill -x fuzzel
   exit 0
