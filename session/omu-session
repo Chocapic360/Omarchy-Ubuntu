@@ -5,6 +5,12 @@
 # following GNOME login starts clean.
 export PATH="$HOME/.local/bin:$PATH"
 
+# GTK_THEME (even empty) makes libadwaita apps like Nautilus lose their styling.
+# Older versions of this script left an empty one in the systemd user environment,
+# which GDM copies into every later login, so drop it before Hyprland starts.
+unset GTK_THEME
+systemctl --user unset-environment GTK_THEME 2>/dev/null
+
 # Snap and Flatpak apps: make sure their .desktop folders are on XDG_DATA_DIRS (and
 # /snap/bin on PATH) so the launcher lists them. Both scripts skip what's already there.
 for f in /etc/profile.d/apps-bin-path.sh /etc/profile.d/flatpak.sh; do
@@ -23,5 +29,11 @@ SHARED_VARS=(WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DE
   ELECTRON_OZONE_PLATFORM_HINT MOZ_ENABLE_WAYLAND)
 systemctl --user unset-environment "${SHARED_VARS[@]}" 2>/dev/null
 dbus-update-activation-environment --systemd ADW_DEBUG_COLOR_SCHEME= 2>/dev/null
+
+# The user's systemd manager can outlive this login, and with it the portals that
+# were tied to this Hyprland. A stale portal makes the next session's apps hang
+# (waybar never shows its bar), so stop them; D-Bus restarts them on demand.
+systemctl --user stop xdg-desktop-portal xdg-desktop-portal-hyprland \
+  xdg-desktop-portal-gtk 2>/dev/null
 
 exit $status
