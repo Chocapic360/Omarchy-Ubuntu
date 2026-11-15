@@ -1,0 +1,9 @@
+#!/bin/bash
+# omu-input: ask for a line of text in the themed menu box. Prints what was typed.
+#   omu-input "Prompt" [--password]
+prompt="$1"
+extra=()
+[[ $2 == "--password" ]] && extra=(--password)
+
+value=$(fuzzel --dmenu --prompt "$prompt: " --width 40 --lines 1 "${extra[@]}" </dev/null 2>/dev/null) || exit 1
+printf '%s\n' "$value"

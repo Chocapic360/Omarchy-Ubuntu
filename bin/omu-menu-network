@@ -1,0 +1,193 @@
+#!/bin/bash
+# omu-menu-network: Wi-Fi and network connections in the themed menu (NetworkManager / nmcli).
+# Opens from the bar's network icon, Super + Ctrl + W, or Setup > Wifi.
+
+BARS=("󰤯" "󰤟" "󰤢" "󰤥" "󰤨")
+ICON_LOCK=""
+ICON_WIRED="󰀂"
+ICON_OFF="󰤮"
+ICON_SCAN=""
+ICON_HIDDEN="󰈉"
+ICON_LINK="󰌷"
+ICON_GEAR=""
+ICON_POWER=""
+
+notify() { notify-send -u low "$@"; }
+
+has_wifi() { nmcli -t -f TYPE device 2>/dev/null | grep -qx wifi; }
+wifi_on() { [[ $(nmcli radio wifi 2>/dev/null) == "enabled" ]]; }
+
+signal_icon() {
+  local s=$1
+  if ((s >= 80)); then echo "${BARS[4]}"
+  elif ((s >= 60)); then echo "${BARS[3]}"
+  elif ((s >= 40)); then echo "${BARS[2]}"
+  elif ((s >= 20)); then echo "${BARS[1]}"
+  else echo "${BARS[0]}"; fi
+}
+
+# One line per network: "<icon>  SSID  <lock>  (connected)"; strongest first, SSIDs de-duplicated
+wifi_lines() {
+  nmcli -t -e no -f IN-USE,SIGNAL,SECURITY,SSID device wifi list --rescan "${1:-auto}" 2>/dev/null |
+    awk -F: '{ inuse=$1; sig=$2; sec=$3; ssid=substr($0, length($1)+length($2)+length($3)+4)
+               if (ssid == "" || seen[ssid]++) next
+               print inuse "\037" sig "\037" sec "\037" ssid }' |
+    sort -t$'\037' -k1,1r -k2,2nr |
+    while IFS=$'\037' read -r inuse sig sec ssid; do
+      line="$(signal_icon "$sig")  $ssid"
+      [[ -n $sec && $sec != "--" ]] && line+="  $ICON_LOCK"
+      [[ $inuse == "*" ]] && line+="  (connected)"
+      printf '%s\n' "$line"
+    done
+}
+
+# Strip the icon, lock and "(connected)" back off a picked line
+ssid_from_line() {
+  local s="${1#*  }"
+  s="${s%  (connected)}"
+  s="${s%  $ICON_LOCK}"
+  printf '%s' "$s"
+}
+
+saved_profile_for() {
+  nmcli -t -e no -f NAME,TYPE connection show 2>/dev/null |
+    awk -F: -v want="$1" '$NF == "802-11-wireless" { name=substr($0, 1, length($0)-length($NF)-1); if (name == want) { print name; exit } }'
+}
+
+connect_wifi() {
+  local ssid="$1" secured="$2" hidden="${3:-no}" profile password out
+  profile=$(saved_profile_for "$ssid")
+
+  if [[ -n $profile ]]; then
+    notify "Connecting to $ssid…"
+    if out=$(nmcli connection up id "$profile" 2>&1); then
+      notify "${BARS[4]}    Connected to $ssid"
+      return
+    fi
+    # Saved password may be wrong or changed: ask again below
+    nmcli connection delete id "$profile" >/dev/null 2>&1
+  fi
+
+  if [[ $secured == "yes" ]]; then
+    password=$(omu-input "Password for $ssid" --password) || return
+    [[ -z $password ]] && return
+  fi
+
+  notify "Connecting to $ssid…"
+  local args=(device wifi connect "$ssid")
+  [[ -n $password ]] && args+=(password "$password")
+  [[ $hidden == "yes" ]] && args+=(hidden yes)
+  if out=$(nmcli "${args[@]}" 2>&1); then
+    notify "${BARS[4]}    Connected to $ssid"
+  else
+    notify-send -u critical "Couldn't connect to $ssid" "$out"
+  fi
+}
+
+show_wifi_menu() {
+  local rescan="${1:-auto}" lines choice
+  lines=$(wifi_lines "$rescan")
+  choice=$(printf '%s\n%s\n%s\n' "$lines" "$ICON_SCAN  Scan again" "$ICON_HIDDEN  Hidden network…" |
+    grep -v '^$' | omu-dmenu -p "Wi-Fi…" -w 42 -l 14) || return
+  case "$choice" in
+  "") show_main_menu ;;
+  *"Scan again") show_wifi_menu yes ;;
+  *"Hidden network…")
+    local ssid
+    ssid=$(omu-input "Network name (SSID)") || return
+    [[ -n $ssid ]] && connect_wifi "$ssid" yes yes
+    ;;
+  *"(connected)")
+    local ssid
+    ssid=$(ssid_from_line "$choice")
+    case $(printf '%s\n' "$ICON_POWER  Disconnect" "$ICON_GEAR  Forget network" | omu-dmenu -p "$ssid…" -w 30) in
+    *Disconnect*) nmcli connection down id "$(saved_profile_for "$ssid")" >/dev/null && notify "Disconnected from $ssid" ;;
+    *Forget*) nmcli connection delete id "$(saved_profile_for "$ssid")" >/dev/null && notify "Forgot $ssid" ;;
+    *) show_wifi_menu ;;
+    esac
+    ;;
+  *)
+    local secured=no
+    [[ $choice == *"$ICON_LOCK"* ]] && secured=yes
+    connect_wifi "$(ssid_from_line "$choice")" "$secured"
+    ;;
+  esac
+}
+
+show_connections_menu() {
+  local list choice name state
+  # NAME:TYPE:DEVICE, NAME may contain ':' so peel TYPE and DEVICE off the end
+  list=$(nmcli -t -e no -f NAME,TYPE,DEVICE connection show 2>/dev/null |
+    awk -F: '{ dev=$NF; type=$(NF-1); name=substr($0, 1, length($0)-length(dev)-length(type)-2)
+               if (type == "loopback" || type == "bridge" && name ~ /^docker|^virbr/) next
+               sub(/^802-11-wireless$/, "wifi", type); sub(/^802-3-ethernet$/, "ethernet", type)
+               print (dev != "" ? "on " : "off") "\t" type "\t" name }')
+  [[ -z $list ]] && { notify "No saved connections"; show_main_menu; return; }
+
+  choice=$(printf '%s\n' "$list" | awk -F'\t' -v w="$ICON_WIRED" -v l="$ICON_LINK" -v b="󰤨" '
+    { icon = ($2 == "wifi") ? b : ($2 == "ethernet") ? w : l
+      printf "%s  %s  [%s]%s\n", icon, $3, $2, ($1 == "on " ? "  (active)" : "") }' |
+    omu-dmenu -p "Connections…" -w 44 -l 14) || return
+  [[ -z $choice ]] && { show_main_menu; return; }
+
+  name="${choice#*  }"
+  name="${name%%  [*}"
+  if [[ $choice == *"(active)" ]]; then
+    nmcli connection down id "$name" >/dev/null 2>&1 && notify "Disconnected $name"
+  else
+    notify "Connecting $name…"
+    if out=$(nmcli connection up id "$name" 2>&1); then
+      notify "Connected $name"
+    else
+      notify-send -u critical "Couldn't connect $name" "$out"
+    fi
+  fi
+}
+
+status_line() {
+  local active
+  active=$(nmcli -t -e no -f NAME,TYPE connection show --active 2>/dev/null |
+    awk -F: '$NF != "loopback" { print substr($0, 1, length($0)-length($NF)-1); exit }')
+  if [[ -n $active ]]; then
+    printf 'Connected: %s' "$active"
+  else
+    printf 'Offline'
+  fi
+}
+
+show_main_menu() {
+  local options="" choice
+  if has_wifi; then
+    if wifi_on; then
+      options+="${BARS[4]}  Wi-Fi networks\n$ICON_OFF  Turn Wi-Fi off\n"
+    else
+      options+="${BARS[4]}  Turn Wi-Fi on\n"
+    fi
+  fi
+  options+="$ICON_LINK  Connections\n$ICON_GEAR  Advanced settings"
+
+  choice=$(echo -e "$options" | omu-dmenu -p "$(status_line)…" -w 36)
+  case "$choice" in
+  *"Wi-Fi networks") show_wifi_menu ;;
+  *"Turn Wi-Fi off") nmcli radio wifi off && notify "$ICON_OFF    Wi-Fi off" ;;
+  *"Turn Wi-Fi on") nmcli radio wifi on && notify "${BARS[4]}    Wi-Fi on" && sleep 2 && show_wifi_menu yes ;;
+  *Connections) show_connections_menu ;;
+  *Advanced*) setsid nm-connection-editor >/dev/null 2>&1 & ;;
+  esac
+}
+
+# Pressing the shortcut again closes the menu
+if pgrep -x fuzzel >/dev/null; then
+  pkill -x fuzzel
+  exit 0
+fi
+
+if ! command -v nmcli >/dev/null; then
+  notify-send -u critical "NetworkManager isn't installed" "sudo apt install network-manager"
+  exit 1
+fi
+
+case "$1" in
+wifi) has_wifi && wifi_on && show_wifi_menu || show_main_menu ;;
+*) show_main_menu ;;
+esac

@@ -24,12 +24,13 @@ fi
 
 # Packages that must exist for the setup to work
 REQUIRED=(
-  hyprland hyprlock hypridle
+  hyprland hyprland-guiutils hyprlock hypridle
   waybar fuzzel mako-notifier swaybg
   grim slurp wl-clipboard cliphist
   brightnessctl playerctl pamixer pavucontrol wireplumber
   jq gawk libxkbcommon-tools libnotify-bin upower xdg-utils xdg-user-dirs
-  alacritty btop blueman network-manager power-profiles-daemon
+  alacritty btop blueman network-manager network-manager-gnome power-profiles-daemon
+  yaru-theme-gtk yaru-theme-icon
   xdg-desktop-portal-gtk
   curl xz-utils fontconfig
 )

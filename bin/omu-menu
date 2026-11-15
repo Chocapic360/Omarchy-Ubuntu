@@ -86,7 +86,7 @@ show_background_menu() {
 show_setup_menu() {
   case $(menu "Setup" "  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n  Defaults\n󰍹  Monitors\n  Keybindings\n  Input\n  Config") in
   *Audio*) pavucontrol ;;
-  *Wifi*) omu-launch-tui nmtui ;;
+  *Wifi*) omu-menu-network ;;
   *Bluetooth*) blueman-manager ;;
   *Power*) show_setup_power_menu ;;
   *Defaults*) show_setup_default_menu ;;

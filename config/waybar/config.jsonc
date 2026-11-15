@@ -82,7 +82,7 @@
     "tooltip-format-disconnected": "Disconnected",
     "interval": 3,
     "spacing": 1,
-    "on-click": "omu-launch-tui nmtui"
+    "on-click": "omu-menu-network"
   },
   "battery": {
     "format": "{capacity}% {icon}",
