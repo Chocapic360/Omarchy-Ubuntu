@@ -108,13 +108,13 @@ install_packages() {
   sudo apt-get install -y "${to_install[@]}"
 
   mkdir -p "$STATE_DIR"
-  comm -13 <(echo "$before") <(installed_package_list) >>"$STATE_DIR/installed-packages"
-  sort -u -o "$STATE_DIR/installed-packages" "$STATE_DIR/installed-packages"
+  LC_ALL=C comm -13 <(echo "$before") <(installed_package_list) >>"$STATE_DIR/installed-packages"
+  LC_ALL=C sort -u -o "$STATE_DIR/installed-packages" "$STATE_DIR/installed-packages"
   sed -i '/^$/d' "$STATE_DIR/installed-packages"
 }
 
 installed_package_list() {
-  dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\n' | awk '$1 == "ii" {print $2}' | sort
+  dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\n' | awk '$1 == "ii" {print $2}' | LC_ALL=C sort
 }
 
 # Setup > Defaults changes ~/.config/mimeapps.list, which GNOME reads too.

@@ -44,8 +44,8 @@ unlink_and_restore() {
 if $PURGE && [[ -s $STATE_DIR/installed-packages ]]; then
   bold "==> Purging the packages install.sh added (needs sudo)"
   mapfile -t still < <(
-    comm -12 <(grep -v '^$' "$STATE_DIR/installed-packages" | sort -u) \
-      <(dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\n' | awk '$1 == "ii" {print $2}' | sort)
+    LC_ALL=C comm -12 <(grep -v '^$' "$STATE_DIR/installed-packages" | LC_ALL=C sort -u) \
+      <(dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\n' | awk '$1 == "ii" {print $2}' | LC_ALL=C sort)
   )
   if ((${#still[@]})); then
     note "apt lists everything it will remove and asks before doing it."
