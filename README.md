@@ -33,10 +33,10 @@ Press **Super + K** to search every shortcut. The essentials:
 | Super + Alt + Space | App launcher |
 | Super + Escape | System menu (lock, suspend, logout, restart, shutdown) |
 | Super + K | Keybindings viewer |
-| Super + Return | Terminal (Alacritty) |
+| Super + Return | Terminal |
 | Super + Shift + B | Browser |
 | Super + Shift + F | Files |
-| Super + Shift + N | Editor (Zed if installed) |
+| Super + Shift + N | Editor |
 | Super + W | Close window |
 | Super + 1…0 | Switch workspace |
 | Super + Shift + 1…0 | Move window to workspace |
@@ -46,6 +46,17 @@ Press **Super + K** to search every shortcut. The essentials:
 | Super + Ctrl + V | Clipboard history |
 | Print | Screenshot a region (copied and saved to ~/Pictures/Screenshots) |
 | Super + Ctrl + L | Lock |
+
+## Default apps
+
+Open the menu (Super + Space) and choose **Setup > Defaults** to pick your:
+
+- **Browser:** any installed browser, including snaps and flatpaks. It's set with `xdg-settings`, so links from other apps open there too.
+- **Terminal:** Alacritty, Ghostty, Kitty, Foot, WezTerm, Ptyxis or GNOME Terminal, whichever are installed.
+- **Editor:** Zed, VS Code, Cursor, Sublime Text, Text Editor, Neovim, Vim, Helix, Micro or Nano. GUI editors also become the default for text files.
+- **File manager:** Files (Nautilus), Nemo, Thunar, Dolphin, Yazi or Ranger.
+
+Only installed apps are listed. The current choice is marked. Your picks are saved in `~/.config/omarchy-ubuntu/defaults`, and the Super + Return, Super + Shift + B, Super + Shift + N and Super + Shift + F shortcuts follow them.
 
 ## Layout
 
@@ -94,6 +105,7 @@ The wallpaper is 16:9 and the laptop screen is 16:10, so it's shown in `fit` mod
 - Waybar doesn't reload by itself: use *Update > Restart Waybar* in the menu, or `omu-restart-waybar`.
 - If the screen name isn't `eDP-1`, check `hyprctl monitors` and fix `config/hypr/monitors.conf`.
 - Personal tweaks go in `~/.config/hypr/local.conf` (not tracked by git).
+- **Virtual machines:** turn on 3D acceleration in the VM settings, because Hyprland needs a GPU with OpenGL (VirtualBox: VMSVGA + "Enable 3D Acceleration"; virt-manager: Virtio video with 3D/OpenGL). `install.sh` detects a VM and turns off hardware cursors, which otherwise often show up invisible. The virtual screen isn't `eDP-1`, so it uses the fallback line in `monitors.conf`.
 - If the launcher won't open, run `fuzzel` in a terminal. An older fuzzel may reject a newer option in `config/fuzzel/fuzzel.ini`. Delete the line it names.
 
 ## Credits

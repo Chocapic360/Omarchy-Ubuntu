@@ -1,0 +1,23 @@
+#!/bin/bash
+# omu-defaults: read/write default app choices (terminal, editor, files).
+# Stored in ~/.config/omarchy-ubuntu/defaults as key=value lines.
+#   omu-defaults get <key> [fallback]
+#   omu-defaults set <key> <value>
+FILE="$HOME/.config/omarchy-ubuntu/defaults"
+
+case "$1" in
+get)
+  value=$(grep -m1 "^$2=" "$FILE" 2>/dev/null | cut -d= -f2-)
+  echo "${value:-$3}"
+  ;;
+set)
+  mkdir -p "$(dirname "$FILE")"
+  touch "$FILE"
+  sed -i "/^$2=/d" "$FILE"
+  echo "$2=$3" >>"$FILE"
+  ;;
+*)
+  echo "Usage: omu-defaults get <key> [fallback] | set <key> <value>" >&2
+  exit 2
+  ;;
+esac

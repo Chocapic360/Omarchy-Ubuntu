@@ -128,6 +128,12 @@ link_files() {
   done
   touch "$REPO/config/hypr/local.conf"
 
+  # Virtual machines: hardware cursors usually show up invisible or offset
+  if systemd-detect-virt --vm --quiet 2>/dev/null && ! grep -q no_hardware_cursors "$REPO/config/hypr/local.conf"; then
+    bold "==> Virtual machine detected: turning off hardware cursors"
+    printf '\n# Added by install.sh: running in a VM\ncursor {\n    no_hardware_cursors = true\n}\n' >>"$REPO/config/hypr/local.conf"
+  fi
+
   bold "==> Linking scripts into ~/.local/bin"
   local script
   for script in "$REPO"/bin/*; do

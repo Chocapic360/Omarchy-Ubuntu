@@ -1,0 +1,10 @@
+#!/bin/bash
+# omu-launch-files: open the default file manager (Setup > Defaults > File manager).
+fm=$(omu-defaults get files nautilus)
+command -v "$fm" >/dev/null || fm=nautilus
+
+case "$fm" in
+yazi | ranger) exec omu-launch-terminal -e "$fm" "$@" ;;
+nautilus) exec nautilus --new-window "$@" ;;
+*) exec "$fm" "$@" ;;
+esac

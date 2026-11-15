@@ -1,8 +1,15 @@
 #!/bin/bash
-# omu-launch-editor: open files/folders in Zed if installed, otherwise $EDITOR in a terminal.
-for zed in zeditor zed; do
-  if command -v "$zed" >/dev/null; then
-    exec "$zed" "$@"
-  fi
-done
-exec alacritty --class omu.floating -e "${EDITOR:-nano}" "$@"
+# omu-launch-editor: open files/folders in the default editor (Setup > Defaults > Editor).
+# Terminal editors (nvim, vim, hx, micro, nano) open in a floating terminal.
+editor=$(omu-defaults get editor "")
+
+if [[ -z $editor ]]; then
+  for candidate in zeditor zed code gnome-text-editor nano; do
+    command -v "$candidate" >/dev/null && { editor=$candidate; break; }
+  done
+fi
+
+case "$editor" in
+nvim | vim | hx | micro | nano) exec omu-launch-terminal --float -e "$editor" "$@" ;;
+*) exec "$editor" "$@" ;;
+esac

@@ -1,0 +1,36 @@
+#!/bin/bash
+# omu-desktop-file: helpers for .desktop files (system, snap and flatpak apps).
+#   omu-desktop-file path <id.desktop>   full path of an app's desktop file
+#   omu-desktop-file browsers            "Name<TAB>id.desktop" for every installed web browser
+DIRS=(
+  "$HOME/.local/share/applications"
+  /usr/local/share/applications
+  /usr/share/applications
+  /var/lib/snapd/desktop/applications
+  "$HOME/.local/share/flatpak/exports/share/applications"
+  /var/lib/flatpak/exports/share/applications
+)
+
+case "$1" in
+path)
+  for dir in "${DIRS[@]}"; do
+    [[ -f $dir/$2 ]] && { echo "$dir/$2"; exit 0; }
+  done
+  exit 1
+  ;;
+browsers)
+  for dir in "${DIRS[@]}"; do
+    [[ -d $dir ]] || continue
+    grep -l -E '^Categories=.*WebBrowser' "$dir"/*.desktop 2>/dev/null |
+      xargs -r grep -l 'x-scheme-handler/https' 2>/dev/null
+  done | while read -r file; do
+    grep -q '^NoDisplay=true' "$file" && continue
+    name=$(grep -m1 '^Name=' "$file" | cut -d= -f2-)
+    printf '%s\t%s\n' "$name" "$(basename "$file")"
+  done | sort -u -t$'\t' -k2,2 | sort -f
+  ;;
+*)
+  echo "Usage: omu-desktop-file path <id.desktop> | browsers" >&2
+  exit 2
+  ;;
+esac

@@ -1,0 +1,38 @@
+#!/bin/bash
+# omu-launch-terminal: open the default terminal (Setup > Defaults > Terminal).
+#   omu-launch-terminal                 new terminal window
+#   omu-launch-terminal -e cmd args...  run a command in it
+#   omu-launch-terminal --float ...     same, as a centred floating window (class omu.floating)
+float=false
+if [[ $1 == "--float" ]]; then
+  float=true
+  shift
+fi
+[[ $1 == "-e" ]] && shift
+
+term=$(omu-defaults get terminal alacritty)
+command -v "$term" >/dev/null || term=alacritty
+
+class=()
+if $float; then
+  case "$term" in
+  alacritty | kitty | wezterm) class=(--class omu.floating) ;;
+  ghostty) class=(--class=omu.floating) ;;
+  foot) class=(--app-id omu.floating) ;;
+  esac
+fi
+
+if (($# == 0)); then
+  case "$term" in
+  wezterm) exec wezterm start "${class[@]}" ;;
+  *) exec "$term" "${class[@]}" ;;
+  esac
+fi
+
+case "$term" in
+alacritty | ghostty) exec "$term" "${class[@]}" -e "$@" ;;
+kitty | foot) exec "$term" "${class[@]}" "$@" ;;
+wezterm) exec wezterm start "${class[@]}" -- "$@" ;;
+gnome-terminal | ptyxis) exec "$term" -- "$@" ;;
+*) exec "$term" -e "$@" ;;
+esac

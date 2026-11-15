@@ -24,7 +24,7 @@ menu() {
 }
 
 present_terminal() {
-  alacritty --class omu.floating -e bash -c "$1; echo; read -n 1 -s -r -p 'Done. Press any key to close.'"
+  omu-launch-terminal --float -e bash -c "$1; echo; read -n 1 -s -r -p 'Done. Press any key to close.'"
 }
 
 open_in_editor() {
@@ -84,11 +84,12 @@ show_background_menu() {
 }
 
 show_setup_menu() {
-  case $(menu "Setup" "  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n󰍹  Monitors\n  Keybindings\n  Input\n  Config") in
+  case $(menu "Setup" "  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n  Defaults\n󰍹  Monitors\n  Keybindings\n  Input\n  Config") in
   *Audio*) pavucontrol ;;
   *Wifi*) omu-launch-tui nmtui ;;
   *Bluetooth*) blueman-manager ;;
   *Power*) show_setup_power_menu ;;
+  *Defaults*) show_setup_default_menu ;;
   *Monitors*) open_in_editor ~/.config/hypr/monitors.conf ;;
   *Keybindings*) open_in_editor ~/.config/hypr/bindings/apps.conf ;;
   *Input*) open_in_editor ~/.config/hypr/input.conf ;;
@@ -106,6 +107,108 @@ show_setup_power_menu() {
   *performance*) powerprofilesctl set performance ;;
   *) back_to show_setup_menu ;;
   esac
+}
+
+# ---- Default apps -------------------------------------------------------
+
+
+show_setup_default_menu() {
+  case $(menu "Defaults" "  Browser\n  Terminal\n  Editor\n  File manager") in
+  *Browser*) show_setup_default_browser_menu ;;
+  *Terminal*) show_setup_default_terminal_menu ;;
+  *Editor*) show_setup_default_editor_menu ;;
+  *File*) show_setup_default_files_menu ;;
+  *) back_to show_setup_menu ;;
+  esac
+}
+
+# Pick one of "Label<TAB>value" lines; prints the value
+pick_default() {
+  local prompt="$1" current="$2" list="$3" choice
+  choice=$(printf '%s\n' "$list" | awk -F'\t' -v cur="$current" 'NF { print $1 ($2 == cur ? "  (current)" : "") }' |
+    omu-dmenu -p "$prompt…" -w 34)
+  [[ -z $choice ]] && return 1
+  choice="${choice%  (current)}"
+  printf '%s\n' "$list" | awk -F'\t' -v want="$choice" '$1 == want { print $2; exit }'
+}
+
+# Keep entries whose command (after the tab) is installed
+installed_only() {
+  local label cmd
+  while IFS=$'\t' read -r label cmd; do
+    command -v "${cmd%% *}" >/dev/null && printf '%s\t%s\n' "$label" "$cmd"
+  done
+}
+
+show_setup_default_browser_menu() {
+  local list current id
+  list=$(omu-desktop-file browsers)
+  if [[ -z $list ]]; then
+    notify-send -u normal "No browsers found" "Install one first, e.g. sudo apt install firefox"
+    back_to show_setup_default_menu
+    return
+  fi
+  current=$(xdg-settings get default-web-browser 2>/dev/null)
+  id=$(pick_default "Default Browser" "$current" "$list") || { back_to show_setup_default_menu; return; }
+  xdg-settings set default-web-browser "$id"
+  for mime in x-scheme-handler/http x-scheme-handler/https text/html application/xhtml+xml; do
+    xdg-mime default "$id" "$mime"
+  done
+  notify-send -u low "    Default browser" "$(printf '%s\n' "$list" | awk -F'\t' -v id="$id" '$2 == id { print $1 }')"
+}
+
+show_setup_default_terminal_menu() {
+  local list current term
+  list=$(printf '%s\t%s\n' \
+    "Alacritty" alacritty "Ghostty" ghostty "Kitty" kitty "Foot" foot \
+    "WezTerm" wezterm "Ptyxis" ptyxis "GNOME Terminal" gnome-terminal | installed_only)
+  current=$(omu-defaults get terminal alacritty)
+  term=$(pick_default "Default Terminal" "$current" "$list") || { back_to show_setup_default_menu; return; }
+  omu-defaults set terminal "$term"
+  notify-send -u low "    Default terminal" "$term (Super + Return)"
+}
+
+show_setup_default_editor_menu() {
+  local list current editor desktop
+  list=$(printf '%s\t%s\n' \
+    "Zed" zeditor "Zed" zed "VS Code" code "Cursor" cursor "Sublime Text" subl \
+    "Text Editor" gnome-text-editor "Neovim" nvim "Vim" vim "Helix" hx "Micro" micro "Nano" nano |
+    installed_only | awk -F'\t' '!seen[$1]++')
+  current=$(omu-defaults get editor "")
+  editor=$(pick_default "Default Editor" "$current" "$list") || { back_to show_setup_default_menu; return; }
+  omu-defaults set editor "$editor"
+
+  # GUI editors also become the default for plain text files
+  case "$editor" in
+  zeditor | zed) desktop=dev.zed.Zed.desktop ;;
+  code) desktop=code.desktop ;;
+  cursor) desktop=cursor.desktop ;;
+  subl) desktop=sublime_text.desktop ;;
+  gnome-text-editor) desktop=org.gnome.TextEditor.desktop ;;
+  esac
+  [[ -n $desktop ]] && omu-desktop-file path "$desktop" >/dev/null && xdg-mime default "$desktop" text/plain
+
+  notify-send -u low "    Default editor" "$editor (Super + Shift + N)"
+}
+
+show_setup_default_files_menu() {
+  local list current fm desktop
+  list=$(printf '%s\t%s\n' \
+    "Files (Nautilus)" nautilus "Nemo" nemo "Thunar" thunar "Dolphin" dolphin \
+    "Yazi" yazi "Ranger" ranger | installed_only)
+  current=$(omu-defaults get files nautilus)
+  fm=$(pick_default "Default File Manager" "$current" "$list") || { back_to show_setup_default_menu; return; }
+  omu-defaults set files "$fm"
+
+  case "$fm" in
+  nautilus) desktop=org.gnome.Nautilus.desktop ;;
+  nemo) desktop=nemo.desktop ;;
+  thunar) desktop=thunar.desktop ;;
+  dolphin) desktop=org.kde.dolphin.desktop ;;
+  esac
+  [[ -n $desktop ]] && omu-desktop-file path "$desktop" >/dev/null && xdg-mime default "$desktop" inode/directory
+
+  notify-send -u low "    Default file manager" "$fm (Super + Shift + F)"
 }
 
 show_setup_config_menu() {

@@ -51,14 +51,14 @@
   "custom/menu": {
     "format": "",
     "on-click": "omu-menu",
-    "on-click-right": "alacritty",
+    "on-click-right": "omu-launch-terminal",
     "tooltip-format": "Omarchy Menu\n\nSuper + Space"
   },
   "cpu": {
     "interval": 5,
     "format": "󰍛",
     "on-click": "omu-launch-tui btop",
-    "on-click-right": "alacritty"
+    "on-click-right": "omu-launch-terminal"
   },
   "clock": {
     "format": "{:L%A %H:%M}",
