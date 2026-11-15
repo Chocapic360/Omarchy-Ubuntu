@@ -31,10 +31,16 @@ This adds a second session; it doesn't change your GNOME one.
 - **Apps and settings:** only Hyprland-session tools are configured (Hyprland, Waybar, fuzzel, mako, SwayOSD, Alacritty). GNOME doesn't read any of those. If `~/.config/alacritty` already existed, it's backed up first and restored by `uninstall.sh`.
 - **Theme:** the purple GTK theme is set as an environment variable inside Hyprland only. It's removed from your user session when Hyprland exits, so GNOME keeps its own look.
 - **Autostart:** some packages (blueman, polkit agents) install login autostart entries. GNOME would run them, so `install.sh` hides any that a package adds and that would run in GNOME, using a per-user override in `~/.config/autostart`. Hyprland starts its own copies from `autostart.conf`.
+- **Background services:** the `waybar`, `mako` and `hypridle` packages enable systemd user services that GNOME's session would start. `install.sh` masks them for your user. Hyprland starts these programs itself.
 - **Not touched:** GNOME settings (`gsettings`/dconf), GNOME extensions and GDM's configuration.
-- **Shared on purpose:** *Setup > Defaults* sets your default browser, text editor and file manager system-wide, so GNOME uses those choices too.
+- **Shared on purpose:** *Setup > Defaults* sets your default browser, text editor and file manager system-wide, so GNOME uses those choices too. `install.sh` saves your `~/.config/mimeapps.list` first and `uninstall.sh` puts it back.
 
-`./uninstall.sh` removes every link, restores the backups, deletes the autostart overrides and the login entry. `./uninstall.sh --packages` also prints the `apt remove` line for the packages the installer added.
+To undo it:
+
+- `./uninstall.sh` removes every link and the login entry, restores the backups and your default apps. The packages stay installed, so their autostart overrides and masked services stay too, and GNOME keeps behaving as before.
+- `./uninstall.sh --packages` also purges every package `install.sh` added, dependencies included and nothing else (apt shows the list and asks first). Then it removes the overrides, the masks, the Nerd Font if `install.sh` installed it, and `~/.config/omarchy-ubuntu`.
+
+Not undone: changes you make through the menus (Wi-Fi networks, Bluetooth pairings), screenshots, clipboard history and Hyprland's logs in `~/.cache/hyprland`.
 
 ## Shortcuts
 

@@ -98,19 +98,36 @@ install_packages() {
   done
   $found || warn "Not in apt: ${GUIUTILS[*]} (Hyprland's popup dialogs won't show)"
 
-  # Remember which packages this run adds, so their login-autostart entries
-  # can be kept out of GNOME and uninstall.sh can list them
-  NEW_PACKAGES=()
-  for pkg in "${to_install[@]}"; do
-    dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "install ok installed" || NEW_PACKAGES+=("$pkg")
-  done
+  # Remember every package this run adds, dependencies included (installed list before vs
+  # after), so their login-autostart entries can be kept out of GNOME and
+  # `uninstall.sh --packages` can purge exactly these and nothing else
+  local before
+  before=$(installed_package_list)
 
   bold "==> Installing ${#to_install[@]} packages"
   sudo apt-get install -y "${to_install[@]}"
 
   mkdir -p "$STATE_DIR"
-  printf '%s\n' "${NEW_PACKAGES[@]}" >>"$STATE_DIR/installed-packages"
+  comm -13 <(echo "$before") <(installed_package_list) >>"$STATE_DIR/installed-packages"
   sort -u -o "$STATE_DIR/installed-packages" "$STATE_DIR/installed-packages"
+  sed -i '/^$/d' "$STATE_DIR/installed-packages"
+}
+
+installed_package_list() {
+  dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\n' | awk '$1 == "ii" {print $2}' | sort
+}
+
+# Setup > Defaults changes ~/.config/mimeapps.list, which GNOME reads too.
+# Keep the original once so uninstall.sh can put it back.
+save_mimeapps() {
+  local list="$HOME/.config/mimeapps.list"
+  mkdir -p "$STATE_DIR"
+  [[ -e $STATE_DIR/mimeapps.list.orig || -e $STATE_DIR/mimeapps.list.none ]] && return
+  if [[ -f $list ]]; then
+    cp -p "$list" "$STATE_DIR/mimeapps.list.orig"
+  else
+    touch "$STATE_DIR/mimeapps.list.none"
+  fi
 }
 
 # Some new packages (blueman, polkit agents, ...) drop a file in /etc/xdg/autostart,
@@ -146,8 +163,12 @@ USER_UNITS=(waybar.service mako.service hypridle.service)
 keep_user_units_out_of_gnome() {
   local unit
   for unit in "${USER_UNITS[@]}"; do
-    if [[ $(readlink "$HOME/.config/systemd/user/$unit" 2>/dev/null) != /dev/null ]]; then
-      systemctl --user mask "$unit" >/dev/null 2>&1 && warn "Kept $unit from starting in GNOME"
+    # Already masked (by you or an earlier run)? Then leave it, and don't record it,
+    # so uninstall.sh only unmasks what this script masked
+    [[ $(readlink "$HOME/.config/systemd/user/$unit" 2>/dev/null) == /dev/null ]] && continue
+    if systemctl --user mask "$unit" >/dev/null 2>&1; then
+      echo "$unit" >>"$STATE_DIR/masked-units"
+      warn "Kept $unit from starting in GNOME"
     fi
   done
 }
@@ -163,6 +184,8 @@ install_font() {
   curl -fsSL "https://github.com/ryanoasis/nerd-fonts/releases/latest/download/JetBrainsMono.tar.xz" |
     tar -xJ -C "$dir"
   fc-cache -f >/dev/null
+  mkdir -p "$STATE_DIR"
+  echo "$dir" >"$STATE_DIR/font-installed"
 }
 
 install_session() {
@@ -231,6 +254,7 @@ if ! $LINKS_ONLY; then
   install_font
   install_session
 fi
+save_mimeapps
 link_files
 $LINKS_ONLY || verify_config
 
