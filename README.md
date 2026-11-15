@@ -116,7 +116,7 @@ The wallpaper is 16:9 and the laptop screen is 16:10, so it's shown in `fit` mod
 - **Hyprland 0.53 from Ubuntu**, not Arch's latest. Omarchy 4 moved to a Lua config and Quickshell. That needs Hyprland 0.56, so this repo follows Omarchy 3.8.
 - **fuzzel replaces Walker** for the launcher and menus. Walker isn't packaged for Ubuntu. fuzzel is styled to match: a centred box with square corners and a 2 px border.
 - **Wi-Fi and network** use a themed menu built on NetworkManager (`nmcli`) instead of Omarchy's `impala`. Open it with the bar's network icon or Super + Ctrl + W. It lists networks with signal strength, asks for passwords in the same menu box, and can disconnect, forget, switch saved connections (wired, VPN) and open the full settings.
-- **Ubuntu tools** in place of Omarchy's other TUIs: `pavucontrol`, `blueman`, `apt`. GTK apps use Ubuntu's `Yaru-purple-dark` theme inside this session only.
+- **Ubuntu tools** in place of Omarchy's other TUIs: `pavucontrol`, `blueman`, `apt`. GTK and libadwaita apps (Nautilus etc.) follow your GNOME theme and accent color, so they look like stock Ubuntu.
 - Left out for now: Omarchy's theme switcher, web apps, screen recording, dictation, the screensaver and the install/remove menus.
 
 ## Troubleshooting
