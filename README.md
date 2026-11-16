@@ -6,6 +6,8 @@ Built for a Dell 16 laptop (1920×1200 @ 60 Hz), but works on any Ubuntu 26.04 m
 
 This is an unofficial port. It isn't affiliated with or endorsed by Omarchy or Basecamp.
 
+These are my personal dotfiles, shared as they are. They're set up for my machine and my taste, so they may not suit yours or work on your hardware. I can't promise support or fixes, and you use them at your own risk. Read `install.sh` before you run it, and `./uninstall.sh` puts things back.
+
 ## Install
 
 ```bash
