@@ -2,7 +2,9 @@
 
 Omarchy's look and feel on **Ubuntu 26.04**, installed next to GNOME rather than replacing it. You get a Hyprland session with Omarchy 3.8's tiling, keybindings, top bar, control menu and keybindings viewer, themed in a purple take on Catppuccin Mocha.
 
-Built for a Dell 16 laptop (1920×1200 @ 60 Hz), but works on any Ubuntu 26.04 machine.
+Built for a Dell 16 laptop (1920×1200 @ 60 Hz), but works on any Ubuntu 26.04 machine. The screen setup in `config/hypr/monitors.conf` targets that laptop's panel (`eDP-1`); any other screen falls back to its preferred mode, so edit that file to set your own resolution, refresh rate or scale (`hyprctl monitors all` lists what you have).
+
+This is an unofficial port. It isn't affiliated with or endorsed by Omarchy or Basecamp.
 
 ## Install
 
@@ -131,3 +133,5 @@ The wallpaper is 16:9 and the laptop screen is 16:10, so it's shown in `fit` mod
 ## Credits
 
 Configs, keybindings, the bar layout, the menu and the keybindings viewer are adapted from [Omarchy](https://github.com/basecamp/omarchy) 3.8 by David Heinemeier Hansson (MIT). Colours from [Catppuccin](https://catppuccin.com). See [LICENSE](LICENSE).
+
+The wallpaper (`themes/purple-catppuccin/backgrounds/1-ascii-hands.png`) is from [Wallhaven](https://wallhaven.vip/w/7jmgey). It isn't covered by this repo's MIT license; its rights belong to the original artist.
