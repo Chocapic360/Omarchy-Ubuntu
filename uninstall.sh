@@ -130,6 +130,11 @@ fi
 bold "==> Removing the login-screen session (needs sudo)"
 sudo rm -f /usr/share/wayland-sessions/omarchy-ubuntu.desktop /usr/local/bin/omu-session
 
+if [[ -f $STATE_DIR/added-to-video-group ]]; then
+  sudo gpasswd -d "$USER" video >/dev/null && note "removed $USER from the video group install.sh added"
+  rm -f "$STATE_DIR/added-to-video-group"
+fi
+
 rm -rf "$STATE_DIR/current"
 
 if $PURGE; then

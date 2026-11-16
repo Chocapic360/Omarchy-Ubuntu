@@ -1,6 +1,7 @@
 #!/bin/bash
 # omu-polkit-agent: start whichever graphical polkit agent is installed (password prompts for admin actions).
 for agent in \
+  /usr/libexec/hyprpolkitagent \
   /usr/lib/policykit-1-gnome/polkit-gnome-authentication-agent-1 \
   /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1 \
   /usr/libexec/polkit-gnome-authentication-agent-1 \

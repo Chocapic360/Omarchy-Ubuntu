@@ -46,8 +46,9 @@ OPTIONAL=(
   fonts-noto-color-emoji
 )
 
-# Only one graphical polkit agent is needed; take the first one available
-POLKIT_AGENTS=(polkit-gnome policykit-1-gnome mate-polkit lxpolkit)
+# Only one graphical polkit agent is needed; take the first one available.
+# hyprpolkitagent first: polkit-gnome segfaults when it shows its dialog under Hyprland.
+POLKIT_AGENTS=(hyprpolkitagent polkit-gnome policykit-1-gnome mate-polkit lxpolkit)
 
 # Hyprland's helper dialogs (hyprland-dialog, update/ANR popups). Ubuntu 26.04 still
 # ships them under the older name hyprland-qtutils; take whichever exists
@@ -159,7 +160,7 @@ keep_autostart_out_of_gnome() {
 # waybar, mako and hypridle ship systemd user services that their packages enable for
 # graphical-session.target. GNOME reaches that target, so they'd start inside GNOME.
 # Hyprland starts them itself from autostart.conf, so mask the services for this user.
-USER_UNITS=(waybar.service mako.service hypridle.service)
+USER_UNITS=(waybar.service mako.service hypridle.service hyprpolkitagent.service)
 keep_user_units_out_of_gnome() {
   local unit
   for unit in "${USER_UNITS[@]}"; do
@@ -192,6 +193,16 @@ install_session() {
   bold "==> Adding \"Hyprland (Omarchy Ubuntu)\" to the login screen"
   sudo install -m 755 "$REPO/session/omu-session" /usr/local/bin/omu-session
   sudo install -m 644 "$REPO/session/omarchy-ubuntu.desktop" /usr/share/wayland-sessions/omarchy-ubuntu.desktop
+}
+
+# Brightness keys (brightnessctl, SwayOSD) write /sys/class/backlight/*/brightness,
+# which Ubuntu's udev rules only open to the "video" group. Takes effect at next login.
+grant_backlight_access() {
+  id -nG "$USER" | tr ' ' '\n' | grep -qx video && return
+  bold "==> Adding $USER to the video group (brightness keys)"
+  sudo usermod -aG video "$USER"
+  mkdir -p "$STATE_DIR"
+  touch "$STATE_DIR/added-to-video-group"
 }
 
 # Symlink $1 -> $2, moving anything already at $2 to a timestamped backup
@@ -253,6 +264,7 @@ if ! $LINKS_ONLY; then
   keep_user_units_out_of_gnome
   install_font
   install_session
+  grant_backlight_access
 fi
 save_mimeapps
 link_files
