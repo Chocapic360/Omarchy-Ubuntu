@@ -87,7 +87,7 @@ show_setup_menu() {
   case $(menu "Setup" "  Audio\n  Wifi\n󰂯  Bluetooth\n󱐋  Power Profile\n  Defaults\n󰍹  Monitors\n  Keybindings\n  Input\n  Config") in
   *Audio*) pavucontrol ;;
   *Wifi*) omu-menu-network ;;
-  *Bluetooth*) blueman-manager ;;
+  *Bluetooth*) omu-menu-bluetooth ;;
   *Power*) show_setup_power_menu ;;
   *Defaults*) show_setup_default_menu ;;
   *Monitors*) open_in_editor ~/.config/hypr/monitors.conf ;;

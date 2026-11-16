@@ -1,0 +1,177 @@
+#!/bin/bash
+# omu-menu-bluetooth: connect, pair and manage Bluetooth devices in the themed menu (bluetoothctl).
+# Opens from the bar's Bluetooth icon, Super + Ctrl + B, or Setup > Bluetooth.
+
+ICON_BT="󰂯"
+ICON_OFF="󰂲"
+ICON_CONNECTED="󰂱"
+ICON_SCAN=""
+ICON_GEAR=""
+ICON_POWER=""
+ICON_TRASH="󰆴"
+SCAN_SECONDS=8
+
+notify() { notify-send -u low "$@"; }
+
+bt() { bluetoothctl "$@" </dev/null 2>/dev/null; }
+
+has_controller() { bt list | grep -q '^Controller'; }
+powered() { bt show | grep -q 'Powered: yes'; }
+
+device_icon() {
+  case "$1" in
+  audio-headphones | audio-headset) echo "󰋋" ;;
+  audio-card | audio-speakers) echo "󰓃" ;;
+  input-mouse) echo "󰍽" ;;
+  input-keyboard) echo "󰌌" ;;
+  input-gaming) echo "󰊴" ;;
+  input-tablet) echo "󰓶" ;;
+  phone) echo "󰏲" ;;
+  computer) echo "󰟀" ;;
+  *) echo "$ICON_BT" ;;
+  esac
+}
+
+# Fills LINES (what the menu shows) and MACS (the device behind each line).
+# $1 = Paired | unpaired
+load_devices() {
+  local want=$1 mac name info icon line battery
+  LINES=() MACS=()
+  while read -r _ mac name; do
+    [[ -z $mac ]] && continue
+    info=$(bt info "$mac")
+    if [[ $want == Paired ]]; then
+      grep -q 'Paired: yes' <<<"$info" || continue
+    else
+      grep -q 'Paired: yes' <<<"$info" && continue
+      # Skip nameless devices, whose alias is just their address
+      [[ $name == "${mac//:/-}" || -z $name ]] && continue
+    fi
+    icon=$(device_icon "$(awk -F': ' '/^\s*Icon:/ { print $2; exit }' <<<"$info")")
+    line="$icon  $name"
+    if grep -q 'Connected: yes' <<<"$info"; then
+      battery=$(sed -n 's/.*Battery Percentage:.*(\([0-9]*\)).*/\1/p' <<<"$info" | head -1)
+      [[ -n $battery ]] && line+="  $battery%"
+      line+="  (connected)"
+    fi
+    LINES+=("$line")
+    MACS+=("$mac")
+  done < <(bt devices)
+}
+
+# Prints the address behind the picked line, if it's a device
+mac_for() {
+  local i
+  for i in "${!LINES[@]}"; do
+    [[ ${LINES[$i]} == "$1" ]] && { printf '%s' "${MACS[$i]}"; return 0; }
+  done
+  return 1
+}
+
+name_of() { bt info "$1" | awk -F': ' '/^\s*Alias:/ { print $2; exit }'; }
+
+connect_device() {
+  local mac=$1 name out
+  name=$(name_of "$mac")
+  notify "$ICON_BT    Connecting to $name…"
+  if out=$(timeout 20 bluetoothctl connect "$mac" </dev/null 2>&1) && grep -q 'Connection successful' <<<"$out"; then
+    notify "$ICON_CONNECTED    Connected to $name"
+  else
+    notify-send -u critical "Couldn't connect to $name" "Make sure it's turned on and in range."
+  fi
+}
+
+pair_device() {
+  local mac=$1 name out
+  name=$(name_of "$mac")
+  notify "$ICON_BT    Pairing with $name…"
+  # NoInputNoOutput agent: "just works" pairing (headphones, mice, speakers, most keyboards)
+  if out=$(timeout 30 bluetoothctl --agent NoInputNoOutput pair "$mac" </dev/null 2>&1) &&
+    grep -qE 'Pairing successful|AlreadyExists' <<<"$out"; then
+    bt trust "$mac" >/dev/null
+    connect_device "$mac"
+  else
+    notify-send -u critical "Couldn't pair with $name" \
+      "Put it in pairing mode and try again. Devices that need a PIN: use Advanced settings."
+  fi
+}
+
+show_device_menu() {
+  local mac=$1 name choice
+  name=$(name_of "$mac")
+  choice=$(printf '%s\n' "$ICON_POWER  Disconnect" "$ICON_TRASH  Forget device" | omu-dmenu -p "$name…" -w 32)
+  case "$choice" in
+  *Disconnect) bt disconnect "$mac" >/dev/null && notify "$ICON_BT    Disconnected $name" ;;
+  *Forget*) bt remove "$mac" >/dev/null && notify "$ICON_TRASH    Forgot $name" ;;
+  *) show_main_menu ;;
+  esac
+}
+
+show_scan_menu() {
+  local choice mac
+  notify -t $((SCAN_SECONDS * 1000)) "$ICON_SCAN    Scanning for devices…" "Put your device in pairing mode."
+  bt --timeout "$SCAN_SECONDS" scan on >/dev/null
+  load_devices unpaired
+  choice=$(printf '%s\n' "${LINES[@]}" "$ICON_SCAN  Scan again" | grep -v '^$' |
+    omu-dmenu -p "New devices…" -w 42 -l 14) || return
+  case "$choice" in
+  "") show_main_menu ;;
+  *"Scan again") show_scan_menu ;;
+  *) mac=$(mac_for "$choice") && pair_device "$mac" ;;
+  esac
+}
+
+show_main_menu() {
+  local choice mac count=0 line prompt
+  if ! powered; then
+    choice=$(echo -e "$ICON_BT  Turn Bluetooth on\n$ICON_GEAR  Advanced settings" |
+      omu-dmenu -p "Bluetooth off…" -w 32)
+    case "$choice" in
+    *"Turn Bluetooth on")
+      rfkill unblock bluetooth 2>/dev/null
+      if bt power on | grep -q succeeded; then
+        notify "$ICON_BT    Bluetooth on"
+        show_main_menu
+      else
+        notify-send -u critical "Couldn't turn Bluetooth on"
+      fi
+      ;;
+    *Advanced*) setsid blueman-manager >/dev/null 2>&1 & ;;
+    esac
+    return
+  fi
+
+  load_devices Paired
+  for line in "${LINES[@]}"; do [[ $line == *"(connected)" ]] && ((count++)); done
+  ((count == 0)) && prompt="Bluetooth…" || prompt="$count connected…"
+
+  choice=$(printf '%s\n' "${LINES[@]}" \
+    "$ICON_SCAN  Pair new device" "$ICON_OFF  Turn Bluetooth off" "$ICON_GEAR  Advanced settings" |
+    grep -v '^$' | omu-dmenu -p "$prompt" -w 42 -l 14) || return
+  case "$choice" in
+  "") ;;
+  *"Pair new device") show_scan_menu ;;
+  *"Turn Bluetooth off") bt power off >/dev/null && notify "$ICON_OFF    Bluetooth off" ;;
+  *"Advanced settings") setsid blueman-manager >/dev/null 2>&1 & ;;
+  *"(connected)") mac=$(mac_for "$choice") && show_device_menu "$mac" ;;
+  *) mac=$(mac_for "$choice") && connect_device "$mac" ;;
+  esac
+}
+
+# Pressing the shortcut again closes the menu
+if pgrep -x fuzzel >/dev/null; then
+  pkill -x fuzzel
+  exit 0
+fi
+
+if ! command -v bluetoothctl >/dev/null; then
+  notify-send -u critical "BlueZ isn't installed" "sudo apt install bluez"
+  exit 1
+fi
+
+if ! has_controller; then
+  notify-send -u critical "No Bluetooth adapter found"
+  exit 1
+fi
+
+show_main_menu
