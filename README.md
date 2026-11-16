@@ -29,7 +29,7 @@ This adds a second session; it doesn't change your GNOME one.
 
 - **Login screen:** GDM gets a new **Hyprland (Omarchy Ubuntu)** entry next to **Ubuntu**. GDM remembers the last session you picked, so to go back, click your name, then the gear icon, and choose **Ubuntu**.
 - **Apps and settings:** only Hyprland-session tools are configured (Hyprland, Waybar, fuzzel, mako, SwayOSD, Alacritty). GNOME doesn't read any of those. If `~/.config/alacritty` already existed, it's backed up first and restored by `uninstall.sh`.
-- **Theme:** the purple GTK theme is set as an environment variable inside Hyprland only. It's removed from your user session when Hyprland exits, so GNOME keeps its own look.
+- **Theme:** GTK and libadwaita apps (Nautilus etc.) use your GNOME theme and accent colour in both sessions, so they look like stock Ubuntu. Nothing forces a GTK theme inside Hyprland.
 - **Autostart:** some packages (blueman, polkit agents) install login autostart entries. GNOME would run them, so `install.sh` hides any that a package adds and that would run in GNOME, using a per-user override in `~/.config/autostart`. Hyprland starts its own copies from `autostart.conf`.
 - **Background services:** the `waybar`, `mako` and `hypridle` packages enable systemd user services that GNOME's session would start. `install.sh` masks them for your user. Hyprland starts these programs itself.
 - **Not touched:** GNOME settings (`gsettings`/dconf), GNOME extensions and GDM's configuration.
