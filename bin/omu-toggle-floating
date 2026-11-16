@@ -1,0 +1,7 @@
+#!/bin/bash
+# omu-toggle-floating: toggle floating (Super + T). Newly floated windows get 80% of the
+# screen and are centered in the area not reserved by waybar, so their top isn't hidden.
+hyprctl dispatch togglefloating >/dev/null
+if [[ $(hyprctl activewindow -j | jq -r '.floating') == "true" ]]; then
+  hyprctl --batch "dispatch resizeactive exact 80% 80% ; dispatch centerwindow 1" >/dev/null
+fi
