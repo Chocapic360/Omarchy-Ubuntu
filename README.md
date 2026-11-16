@@ -134,4 +134,4 @@ The wallpaper is 16:9 and the laptop screen is 16:10, so it's shown in `fit` mod
 
 Configs, keybindings, the bar layout, the menu and the keybindings viewer are adapted from [Omarchy](https://github.com/basecamp/omarchy) 3.8 by David Heinemeier Hansson (MIT). Colours from [Catppuccin](https://catppuccin.com). See [LICENSE](LICENSE).
 
-The wallpaper (`themes/purple-catppuccin/backgrounds/1-ascii-hands.png`) is from [Wallhaven](https://wallhaven.vip/w/7jmgey). It isn't covered by this repo's MIT license; its rights belong to the original artist.
+The wallpaper (`themes/purple-catppuccin/backgrounds/1-ascii-hands.png`) is from [Wallhaven](https://wallhaven.cc/w/7jmgey), uploaded by DistroLinux. It isn't covered by this repo's MIT license; its rights belong to the original artist.
