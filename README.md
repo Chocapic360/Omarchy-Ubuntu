@@ -2,6 +2,10 @@
 
 Omarchy's look and feel on **Ubuntu 26.04**, installed next to GNOME rather than replacing it. You get a Hyprland session with Omarchy 3.8's tiling, keybindings, top bar, control menu and keybindings viewer, themed in a purple take on Catppuccin Mocha.
 
+<img width="1920" height="1199" alt="image" src="https://github.com/user-attachments/assets/9e901643-1869-48b9-8377-7cfb40222ab3" />
+<img width="1920" height="1200" alt="screenshot-2026-11-18_09-30-06" src="https://github.com/user-attachments/assets/e801e758-d07e-41ca-945b-be6fd8386f42" />
+
+
 Built for a Dell 16 laptop (1920×1200 @ 60 Hz), but works on any Ubuntu 26.04 machine. The screen setup in `config/hypr/monitors.conf` targets that laptop's panel (`eDP-1`); any other screen falls back to its preferred mode, so edit that file to set your own resolution, refresh rate or scale (`hyprctl monitors all` lists what you have).
 
 This is an unofficial port. It isn't affiliated with or endorsed by Omarchy or Basecamp.
