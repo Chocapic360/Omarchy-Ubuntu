@@ -68,7 +68,7 @@ Press **Super + K** to search every shortcut. The essentials:
 | Super + C / V | Universal copy / paste |
 | Super + Ctrl + V | Clipboard history |
 | Print | Screenshot a region (copied and saved to ~/Pictures/Screenshots) |
-| Super + Ctrl + L | Lock |
+| Super + L | Lock |
 
 ## Default apps
 
