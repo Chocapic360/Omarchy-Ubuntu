@@ -1,0 +1,33 @@
+#!/bin/bash
+# omu-power-button: power key action: opens the System menu, or shows power buttons on the lock screen.
+# Usage: omu-power-button                   (bound to XF86PowerOff)
+#        omu-power-button label <text>      (hyprlock label: prints <text> only while the buttons are shown)
+#        omu-power-button suspend|reboot|poweroff|hide   (hyprlock button clicks)
+FLAG="${XDG_RUNTIME_DIR:-/tmp}/omu-lock-power-menu"
+
+refresh_lock() { pkill -USR2 -x hyprlock; }
+
+case "$1" in
+label)
+  [[ -e $FLAG ]] && printf '%s\n' "$2"
+  ;;
+suspend | reboot | poweroff)
+  # Hidden buttons still sit on the lock screen; ignore clicks on them
+  [[ -e $FLAG ]] || exit 0
+  rm -f "$FLAG"
+  refresh_lock
+  exec systemctl "$1"
+  ;;
+hide)
+  rm -f "$FLAG"
+  refresh_lock
+  ;;
+*)
+  if pidof hyprlock >/dev/null; then
+    if [[ -e $FLAG ]]; then rm -f "$FLAG"; else touch "$FLAG"; fi
+    refresh_lock
+  else
+    exec omu-menu system
+  fi
+  ;;
+esac

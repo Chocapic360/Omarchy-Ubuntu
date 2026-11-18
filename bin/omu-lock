@@ -1,3 +1,6 @@
 #!/bin/bash
-# omu-lock: lock the screen now (Super + Ctrl + L).
-pidof hyprlock >/dev/null || exec hyprlock
+# omu-lock: lock the screen now (Super + Ctrl + L, idle and before sleep).
+pidof hyprlock >/dev/null && exit 0
+# Start with the lock screen's power buttons hidden
+rm -f "${XDG_RUNTIME_DIR:-/tmp}/omu-lock-power-menu"
+exec hyprlock
