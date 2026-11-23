@@ -40,6 +40,7 @@ This adds a second session; it doesn't change your GNOME one.
 - **Theme:** GTK and libadwaita apps (Nautilus etc.) use your GNOME theme and accent colour in both sessions, so they look like stock Ubuntu. Nothing forces a GTK theme inside Hyprland.
 - **Autostart:** some packages (blueman, polkit agents) install login autostart entries. GNOME would run them, so `install.sh` hides any that a package adds and that would run in GNOME, using a per-user override in `~/.config/autostart`. Hyprland starts its own copies from `autostart.conf`.
 - **Background services:** the `waybar`, `mako` and `hypridle` packages enable systemd user services that GNOME's session would start. `install.sh` masks them for your user. Hyprland starts these programs itself.
+- **Time zone:** `omu-auto-timezone` sets the system time zone from your public IP (looked up at ipinfo.io, falling back to ipapi.co) at login and whenever the network reconnects. It follows GNOME's *Automatic Time Zone* switch, so turn that off in GNOME Settings to stop it. The time zone is system-wide, so GNOME shows it too.
 - **Not touched:** GNOME settings (`gsettings`/dconf), GNOME extensions and GDM's configuration.
 - **Shared on purpose:** *Setup > Defaults* sets your default browser, text editor and file manager system-wide, so GNOME uses those choices too. `install.sh` saves your `~/.config/mimeapps.list` first and `uninstall.sh` puts it back.
 

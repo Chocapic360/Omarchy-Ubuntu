@@ -1,0 +1,38 @@
+#!/bin/bash
+# omu-auto-timezone: set the system timezone from your public IP, at login and whenever the network reconnects.
+# Follows GNOME's "Automatic Time Zone" switch (read only). Waybar's clock is restarted to pick up a change.
+
+enabled() {
+  [[ $(gsettings get org.gnome.desktop.datetime automatic-timezone 2>/dev/null) != false ]]
+}
+
+lookup() {
+  local tz
+  for url in https://ipinfo.io/timezone https://ipapi.co/timezone; do
+    tz=$(curl -fsS --max-time 10 "$url" 2>/dev/null | tr -d '[:space:]')
+    # Only accept a real zone name, never whatever an error page returned.
+    if [[ $tz =~ ^[A-Za-z_]+(/[A-Za-z0-9_+-]+)+$ && -f /usr/share/zoneinfo/$tz ]]; then
+      echo "$tz"
+      return 0
+    fi
+  done
+  return 1
+}
+
+update() {
+  enabled || return
+  local tz current
+  tz=$(lookup) || return
+  current=$(timedatectl show -p Timezone --value)
+  [[ $tz == "$current" ]] && return
+  # Ubuntu's polkit rules let sudo-group users do this without a password; never pop a dialog.
+  timedatectl --no-ask-password set-timezone "$tz" || return
+  notify-send -a "Time zone" "Time zone changed" "$current → $tz"
+  pgrep -x waybar >/dev/null && omu-restart-waybar
+}
+
+update
+# Check again each time the network comes back (new Wi-Fi, waking from suspend).
+nmcli monitor 2>/dev/null | while read -r line; do
+  [[ $line == "Connectivity is now 'full'" ]] && update
+done
