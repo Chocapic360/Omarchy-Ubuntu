@@ -17,12 +17,44 @@ for f in /etc/profile.d/apps-bin-path.sh /etc/profile.d/flatpak.sh; do
   [ -r "$f" ] && . "$f"
 done
 
+# Watchdog: Hyprland 0.53 can get stuck busy-looping on one core (seen after a failed
+# file copy into xfreerdp left an XWayland clipboard transfer hanging), which drains the
+# battery while everything still looks fine. Once a minute, check how much CPU
+# Hyprland's main thread used; if it stays above 90% for 5 minutes in a row, send one
+# notification (and another only after it has recovered). Only logging out fixes it.
+hyprland_watchdog() {
+  local hz pid="" last=0 now busy=0 warned=0
+  hz=$(getconf CLK_TCK)
+  while sleep 60; do
+    if [ -z "$pid" ] || [ ! -e "/proc/$pid" ]; then
+      pid=$(pgrep -xn -u "$UID" Hyprland) || pid=""
+      last=0 busy=0
+      continue
+    fi
+    now=$(awk '{ print $14 + $15 }' "/proc/$pid/task/$pid/stat" 2>/dev/null) || continue
+    if [ "$last" -gt 0 ] && [ $((now - last)) -ge $((hz * 60 * 90 / 100)) ]; then
+      busy=$((busy + 1))
+    else
+      busy=0 warned=0
+    fi
+    last=$now
+    if [ "$busy" -ge 5 ] && [ "$warned" -eq 0 ]; then
+      notify-send -u critical -a omu-session "Hyprland is stuck at 100% CPU" \
+        "It has used a full core for 5 minutes and is draining the battery. Save your work and log out to fix it." 2>/dev/null
+      warned=1
+    fi
+  done
+}
+hyprland_watchdog &
+watchdog=$!
+
 if command -v start-hyprland >/dev/null; then
   start-hyprland
 else
   Hyprland
 fi
 status=$?
+kill "$watchdog" 2>/dev/null
 
 SHARED_VARS=(WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE XDG_SESSION_DESKTOP
   HYPRLAND_INSTANCE_SIGNATURE GTK_THEME ADW_DEBUG_COLOR_SCHEME QT_QPA_PLATFORM
