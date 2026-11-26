@@ -9,6 +9,8 @@ outer-margin=20
 padding=10,15
 border-size=2
 max-icon-size=32
+# Use the GTK icon theme, not just hicolor (where update-notifier's orange icon lives)
+icon-path=/usr/share/icons/Yaru-magenta:/usr/share/icons/Yaru:/usr/share/icons/hicolor
 font=JetBrainsMono Nerd Font 11
 
 [mode=do-not-disturb]
